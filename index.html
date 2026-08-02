@@ -98,7 +98,8 @@
       <div class="row">
         <label class="file-label" for="csvFile">Import BGG CSV</label>
         <input id="csvFile" type="file" accept=".csv,text/csv" />
-        <button id="reloadBtn">Reload Last Import</button>
+        <button id="hostedBtn">Load Hosted Collection</button>
+        <button id="reloadBtn">Reload This Device’s Import</button>
       </div>
       <div class="row" style="margin-top:12px">
         <label class="check"><input id="excludeExpansions" type="checkbox" checked> Exclude expansions</label>
@@ -143,6 +144,7 @@
 <script>
 const els = {
   file: document.getElementById('csvFile'),
+  hosted: document.getElementById('hostedBtn'),
   reload: document.getElementById('reloadBtn'),
   excludeExpansions: document.getElementById('excludeExpansions'),
   ownedOnly: document.getElementById('ownedOnly'),
@@ -336,22 +338,33 @@ function renderHistory(){
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
-function loadText(text, remember=true){
+function loadText(text, remember=true, sourceLabel='collection'){
   const rows=parseCSV(text);
   allGames=rows.map(mapGame).filter(g=>g.name);
   if(remember){
     try{localStorage.setItem('bgg-spinner-last-csv',text)}catch(e){}
   }
-  els.importMessage.textContent=`Imported ${allGames.length} collection rows.`;
+  els.importMessage.textContent=`Loaded ${allGames.length} rows from ${sourceLabel}.`;
   applyFilters();
 }
 els.file.addEventListener('change',async e=>{
   const file=e.target.files[0]; if(!file) return;
-  loadText(await file.text(),true);
+  loadText(await file.text(),true,'your uploaded CSV');
 });
+async function loadHostedCollection(){
+  els.importMessage.textContent='Loading the hosted collection…';
+  try{
+    const response=await fetch('./collection.csv',{cache:'no-store'});
+    if(!response.ok) throw new Error(`HTTP ${response.status}`);
+    loadText(await response.text(),false,'the hosted collection');
+  }catch(error){
+    els.importMessage.textContent='Could not load collection.csv from the hosted site. You can still import a CSV manually.';
+  }
+}
+els.hosted.addEventListener('click',loadHostedCollection);
 els.reload.addEventListener('click',()=>{
   const text=localStorage.getItem('bgg-spinner-last-csv');
-  if(text) loadText(text,false);
+  if(text) loadText(text,false,'this device’s saved CSV');
   else els.importMessage.textContent='No saved import was found on this device.';
 });
 [els.excludeExpansions,els.ownedOnly,els.unplayedOnly].forEach(el=>el.addEventListener('change',applyFilters));
@@ -362,6 +375,7 @@ els.reset.addEventListener('click',()=>{
   decisions={};localStorage.removeItem('bgg-spinner-decisions');applyFilters();
 });
 drawWheel();updateStats();
+loadHostedCollection();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));

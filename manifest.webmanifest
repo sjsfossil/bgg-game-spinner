@@ -5,6 +5,6 @@
   "display": "standalone",
   "background_color": "#0b1020",
   "theme_color": "#111827",
-  "description": "Spin through owned, unplayed BoardGameGeek collection games.",
+  "description": "Cross-device spinner for an owned, unplayed BoardGameGeek collection.",
   "icons": []
 }

@@ -1,9 +1,15 @@
-BGG Game Spinner v2
+BGG Game Spinner v3 — Cross-device collection
 
-This version supports the current BoardGameGeek CSV export headers, including objectname, own, numplays, itemtype, comment, and privatecomment.
+Upload these files to the ROOT of the same GitHub repository:
+- index.html
+- manifest.webmanifest
+- sw.js
+- collection.csv
 
-UPLOAD TO GITHUB
-Replace index.html, manifest.webmanifest, and sw.js in your GitHub repository with these versions. Commit the changes. GitHub Pages will redeploy automatically.
+The app automatically loads collection.csv whenever it opens, so the same collection appears in any browser.
 
-IMPORTANT IPHONE STEP
-Because the first version uses a service worker, Safari may temporarily keep the old cached app. After GitHub finishes updating, remove the old Home Screen icon, open the GitHub Pages site directly in Safari, refresh it, and add it to the Home Screen again.
+To update the collection, export a fresh BGG CSV, rename it collection.csv, replace the existing GitHub file, and commit the change.
+
+PRIVACY: A public GitHub Pages site also makes collection.csv publicly accessible. It may contain comments or private comments. Remove anything you do not want exposed. True private syncing requires authentication and a cloud database.
+
+Play/Pass decisions remain stored separately in each browser. Syncing those decisions also requires a cloud database and sign-in.
