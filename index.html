@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>BGG Game Spinner</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{
+      color-scheme: dark;
+      --bg:#0b1020;
+      --panel:#151c31;
+      --panel2:#1c2540;
+      --text:#f8fafc;
+      --muted:#a8b3cf;
+      --accent:#7c3aed;
+      --accent2:#22c55e;
+      --danger:#ef4444;
+      --line:#2d385a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:linear-gradient(180deg,#0b1020,#10172b);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{max-width:760px;margin:auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
+    h1{font-size:1.8rem;margin:10px 0 4px}
+    .sub{color:var(--muted);margin:0 0 18px}
+    .card{
+      background:rgba(21,28,49,.96);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:16px;
+      margin:14px 0;
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    button,.file-label{
+      appearance:none;border:0;border-radius:14px;padding:13px 16px;
+      font-size:1rem;font-weight:700;cursor:pointer;
+      background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    }
+    button.primary{background:var(--accent);border-color:transparent}
+    button.play{background:var(--accent2);color:#06120a;border-color:transparent}
+    button.pass{background:#374151}
+    button.danger{background:#7f1d1d}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    input[type=file]{display:none}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .stat{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+    .stat strong{display:block;font-size:1.35rem}
+    .stat span{color:var(--muted);font-size:.82rem}
+    .wheel-wrap{position:relative;display:grid;place-items:center;margin:8px auto 14px}
+    canvas{max-width:100%;height:auto;filter:drop-shadow(0 10px 22px rgba(0,0,0,.35))}
+    .pointer{
+      position:absolute;top:4px;width:0;height:0;
+      border-left:18px solid transparent;border-right:18px solid transparent;
+      border-top:32px solid #f8fafc;z-index:3;
+      filter:drop-shadow(0 4px 5px rgba(0,0,0,.4));
+    }
+    .winner{font-size:1.5rem;font-weight:800;text-align:center;margin:8px 0}
+    .meta{color:var(--muted);text-align:center;margin-bottom:12px}
+    .comments{
+      background:#0f172a;border:1px solid var(--line);border-radius:14px;
+      padding:14px;white-space:pre-wrap;line-height:1.45;
+    }
+    .comments.empty{color:var(--muted);font-style:italic}
+    .hidden{display:none!important}
+    label.check{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.95rem}
+    select{
+      background:#0f172a;color:var(--text);border:1px solid var(--line);
+      border-radius:12px;padding:10px;font-size:1rem;
+    }
+    .small{font-size:.88rem;color:var(--muted)}
+    .history-item{
+      display:flex;justify-content:space-between;gap:8px;padding:9px 0;
+      border-bottom:1px solid var(--line)
+    }
+    .badge{font-size:.75rem;font-weight:700;padding:4px 8px;border-radius:999px;background:#334155}
+    .badge.played{background:#14532d}.badge.passed{background:#374151}
+    @media (max-width:520px){
+      .stats{grid-template-columns:1fr 1fr 1fr}
+      button,.file-label{width:100%;text-align:center}
+      .row.actions button{width:calc(50% - 5px)}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>🎲 BGG Game Spinner</h1>
+    <p class="sub">Import your BoardGameGeek collection and pick an unplayed game.</p>
+
+    <section class="card">
+      <div class="row">
+        <label class="file-label" for="csvFile">Import BGG CSV</label>
+        <input id="csvFile" type="file" accept=".csv,text/csv" />
+        <button id="reloadBtn">Reload Last Import</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label class="check"><input id="excludeExpansions" type="checkbox" checked> Exclude expansions</label>
+        <label class="check"><input id="ownedOnly" type="checkbox" checked> Owned only</label>
+        <label class="check"><input id="unplayedOnly" type="checkbox" checked> No logged plays only</label>
+      </div>
+      <p id="importMessage" class="small">No collection imported yet.</p>
+      <div class="stats">
+        <div class="stat"><strong id="totalCount">0</strong><span>Eligible</span></div>
+        <div class="stat"><strong id="passedCount">0</strong><span>Passed</span></div>
+        <div class="stat"><strong id="playedCount">0</strong><span>Selected</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="wheel-wrap">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="620" height="620"></canvas>
+      </div>
+      <button id="spinBtn" class="primary" style="width:100%" disabled>SPIN THE WHEEL</button>
+    </section>
+
+    <section id="resultCard" class="card hidden">
+      <div id="winner" class="winner"></div>
+      <div id="meta" class="meta"></div>
+      <div id="comments" class="comments empty"></div>
+      <div class="row actions" style="margin-top:14px">
+        <button id="playBtn" class="play">Play It</button>
+        <button id="passBtn" class="pass">Pass</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row" style="justify-content:space-between">
+        <strong>Session History</strong>
+        <button id="resetBtn" class="danger">Reset Session</button>
+      </div>
+      <div id="history" class="small" style="margin-top:10px">No decisions yet.</div>
+    </section>
+  </main>
+
+<script>
+const els = {
+  file: document.getElementById('csvFile'),
+  reload: document.getElementById('reloadBtn'),
+  excludeExpansions: document.getElementById('excludeExpansions'),
+  ownedOnly: document.getElementById('ownedOnly'),
+  unplayedOnly: document.getElementById('unplayedOnly'),
+  importMessage: document.getElementById('importMessage'),
+  totalCount: document.getElementById('totalCount'),
+  passedCount: document.getElementById('passedCount'),
+  playedCount: document.getElementById('playedCount'),
+  spin: document.getElementById('spinBtn'),
+  canvas: document.getElementById('wheel'),
+  resultCard: document.getElementById('resultCard'),
+  winner: document.getElementById('winner'),
+  meta: document.getElementById('meta'),
+  comments: document.getElementById('comments'),
+  play: document.getElementById('playBtn'),
+  pass: document.getElementById('passBtn'),
+  reset: document.getElementById('resetBtn'),
+  history: document.getElementById('history')
+};
+
+const ctx = els.canvas.getContext('2d');
+let allGames = [];
+let eligibleGames = [];
+let currentGame = null;
+let rotation = 0;
+let spinning = false;
+let decisions = JSON.parse(localStorage.getItem('bgg-spinner-decisions') || '{}');
+
+function normalizeHeader(h){
+  return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+function firstValue(row, names){
+  for (const name of names){
+    const key = Object.keys(row).find(k => normalizeHeader(k) === normalizeHeader(name));
+    if (key && row[key] !== undefined) return String(row[key]).trim();
+  }
+  return '';
+}
+function toNumber(v){
+  const n = Number(String(v).replace(/,/g,'').trim());
+  return Number.isFinite(n) ? n : 0;
+}
+function parseCSV(text){
+  const rows=[]; let row=[], field='', quoted=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], next=text[i+1];
+    if(c === '"'){
+      if(quoted && next === '"'){ field+='"'; i++; }
+      else quoted=!quoted;
+    } else if(c === ',' && !quoted){ row.push(field); field=''; }
+    else if((c === '\n' || c === '\r') && !quoted){
+      if(c === '\r' && next === '\n') i++;
+      row.push(field); field='';
+      if(row.some(v => v !== '')) rows.push(row);
+      row=[];
+    } else field+=c;
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  if(rows.length < 2) return [];
+  const headers=rows[0].map(h=>h.trim());
+  return rows.slice(1).map(values=>{
+    const obj={}; headers.forEach((h,i)=>obj[h]=values[i] ?? ''); return obj;
+  });
+}
+function mapGame(row, index){
+  return {
+    id: firstValue(row,['objectid','object id','gameid','game id']) || `row-${index}`,
+    name: firstValue(row,['name','title','game']),
+    own: toNumber(firstValue(row,['own','owned'])),
+    numplays: toNumber(firstValue(row,['numplays','num plays','plays'])),
+    subtype: firstValue(row,['subtype','type']).toLowerCase(),
+    comment: firstValue(row,['comment','comments','usercomment','user comment','notes']),
+    year: firstValue(row,['yearpublished','year published','year']),
+    minplayers: firstValue(row,['minplayers','min players']),
+    maxplayers: firstValue(row,['maxplayers','max players']),
+    playingtime: firstValue(row,['playingtime','playing time','playtime']),
+    rating: firstValue(row,['rating','bgg rating']),
+    raw: row
+  };
+}
+function applyFilters(){
+  eligibleGames = allGames.filter(g => {
+    if(!g.name) return false;
+    if(els.ownedOnly.checked && g.own !== 1) return false;
+    if(els.unplayedOnly.checked && g.numplays !== 0) return false;
+    if(els.excludeExpansions.checked && g.subtype.includes('expansion')) return false;
+    if(decisions[g.id]) return false;
+    return true;
+  });
+  currentGame=null;
+  els.resultCard.classList.add('hidden');
+  els.spin.disabled = eligibleGames.length === 0;
+  updateStats();
+  drawWheel();
+}
+function updateStats(){
+  const values = Object.values(decisions);
+  els.totalCount.textContent = eligibleGames.length;
+  els.passedCount.textContent = values.filter(v=>v.status==='passed').length;
+  els.playedCount.textContent = values.filter(v=>v.status==='played').length;
+  renderHistory();
+}
+function colorFor(i,total){
+  const hue = Math.round((i * 360 / Math.max(total,1)) % 360);
+  return `hsl(${hue} 65% 48%)`;
+}
+function drawWheel(){
+  const w=els.canvas.width,h=els.canvas.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-18;
+  ctx.clearRect(0,0,w,h);
+  if(!eligibleGames.length){
+    ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#cbd5e1';ctx.font='700 28px -apple-system, sans-serif';ctx.textAlign='center';
+    ctx.fillText('Import your BGG CSV',cx,cy);
+    return;
+  }
+  const shown = eligibleGames.slice(0,80);
+  const arc=Math.PI*2/shown.length;
+  shown.forEach((g,i)=>{
+    const start=rotation+i*arc,end=start+arc;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
+    ctx.fillStyle=colorFor(i,shown.length);ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.stroke();
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(start+arc/2);
+    ctx.textAlign='right';ctx.fillStyle='#fff';
+    const fs = shown.length > 40 ? 11 : shown.length > 20 ? 14 : 18;
+    ctx.font=`700 ${fs}px -apple-system, sans-serif`;
+    const maxChars = shown.length > 40 ? 18 : shown.length > 20 ? 24 : 32;
+    const label=g.name.length>maxChars?g.name.slice(0,maxChars-1)+'…':g.name;
+    ctx.fillText(label,r-18,fs/3);ctx.restore();
+  });
+  ctx.beginPath();ctx.arc(cx,cy,42,0,Math.PI*2);ctx.fillStyle='#111827';ctx.fill();
+  ctx.strokeStyle='#f8fafc';ctx.lineWidth=4;ctx.stroke();
+}
+function spinWheel(){
+  if(spinning || !eligibleGames.length) return;
+  spinning=true;els.spin.disabled=true;
+  const chosenIndex=Math.floor(Math.random()*eligibleGames.length);
+  const shown=eligibleGames.slice(0,80);
+  const displayIndex=Math.min(chosenIndex,shown.length-1);
+  const arc=Math.PI*2/shown.length;
+  const pointerAngle=-Math.PI/2;
+  const target=pointerAngle-(displayIndex+.5)*arc;
+  const extraTurns=(5+Math.random()*3)*Math.PI*2;
+  const start=rotation;
+  const end=target+extraTurns;
+  const duration=3200;
+  const t0=performance.now();
+  function animate(now){
+    const p=Math.min((now-t0)/duration,1);
+    const eased=1-Math.pow(1-p,4);
+    rotation=start+(end-start)*eased;
+    drawWheel();
+    if(p<1) requestAnimationFrame(animate);
+    else{
+      rotation=((rotation%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
+      currentGame=eligibleGames[chosenIndex];
+      showResult(currentGame);
+      spinning=false;els.spin.disabled=false;
+    }
+  }
+  requestAnimationFrame(animate);
+}
+function showResult(g){
+  els.winner.textContent=g.name;
+  const details=[];
+  if(g.year) details.push(g.year);
+  if(g.minplayers || g.maxplayers) details.push(`${g.minplayers || '?'}–${g.maxplayers || '?'} players`);
+  if(g.playingtime) details.push(`${g.playingtime} min`);
+  if(g.rating && g.rating !== 'N/A') details.push(`Rating: ${g.rating}`);
+  els.meta.textContent=details.join(' • ') || 'No additional details in the export';
+  els.comments.textContent=g.comment || 'No BGG comments were included for this game.';
+  els.comments.classList.toggle('empty',!g.comment);
+  els.resultCard.classList.remove('hidden');
+  els.resultCard.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function decide(status){
+  if(!currentGame) return;
+  decisions[currentGame.id]={status,name:currentGame.name,at:new Date().toISOString()};
+  localStorage.setItem('bgg-spinner-decisions',JSON.stringify(decisions));
+  applyFilters();
+}
+function renderHistory(){
+  const items=Object.values(decisions).sort((a,b)=>b.at.localeCompare(a.at));
+  if(!items.length){els.history.textContent='No decisions yet.';return;}
+  els.history.innerHTML=items.map(i=>`
+    <div class="history-item">
+      <span>${escapeHtml(i.name)}</span>
+      <span class="badge ${i.status}">${i.status==='played'?'PLAY':'PASS'}</span>
+    </div>`).join('');
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function loadText(text, remember=true){
+  const rows=parseCSV(text);
+  allGames=rows.map(mapGame).filter(g=>g.name);
+  if(remember){
+    try{localStorage.setItem('bgg-spinner-last-csv',text)}catch(e){}
+  }
+  els.importMessage.textContent=`Imported ${allGames.length} collection rows.`;
+  applyFilters();
+}
+els.file.addEventListener('change',async e=>{
+  const file=e.target.files[0]; if(!file) return;
+  loadText(await file.text(),true);
+});
+els.reload.addEventListener('click',()=>{
+  const text=localStorage.getItem('bgg-spinner-last-csv');
+  if(text) loadText(text,false);
+  else els.importMessage.textContent='No saved import was found on this device.';
+});
+[els.excludeExpansions,els.ownedOnly,els.unplayedOnly].forEach(el=>el.addEventListener('change',applyFilters));
+els.spin.addEventListener('click',spinWheel);
+els.play.addEventListener('click',()=>decide('played'));
+els.pass.addEventListener('click',()=>decide('passed'));
+els.reset.addEventListener('click',()=>{
+  decisions={};localStorage.removeItem('bgg-spinner-decisions');applyFilters();
+});
+drawWheel();updateStats();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
