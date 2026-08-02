@@ -210,11 +210,11 @@ function parseCSV(text){
 function mapGame(row, index){
   return {
     id: firstValue(row,['objectid','object id','gameid','game id']) || `row-${index}`,
-    name: firstValue(row,['name','title','game']),
+    name: firstValue(row,['objectname','name','title','game']),
     own: toNumber(firstValue(row,['own','owned'])),
     numplays: toNumber(firstValue(row,['numplays','num plays','plays'])),
-    subtype: firstValue(row,['subtype','type']).toLowerCase(),
-    comment: firstValue(row,['comment','comments','usercomment','user comment','notes']),
+    subtype: firstValue(row,['itemtype','subtype','type']).toLowerCase(),
+    comment: [firstValue(row,['comment','comments','usercomment','user comment','notes']), firstValue(row,['privatecomment','private comment'])].filter(Boolean).join('\n\n'),
     year: firstValue(row,['yearpublished','year published','year']),
     minplayers: firstValue(row,['minplayers','min players']),
     maxplayers: firstValue(row,['maxplayers','max players']),
@@ -228,7 +228,7 @@ function applyFilters(){
     if(!g.name) return false;
     if(els.ownedOnly.checked && g.own !== 1) return false;
     if(els.unplayedOnly.checked && g.numplays !== 0) return false;
-    if(els.excludeExpansions.checked && g.subtype.includes('expansion')) return false;
+    if(els.excludeExpansions.checked && (g.subtype.includes('expansion') || (g.subtype && g.subtype !== 'standalone'))) return false;
     if(decisions[g.id]) return false;
     return true;
   });
