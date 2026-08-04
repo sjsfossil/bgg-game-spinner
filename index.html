@@ -67,6 +67,23 @@
     @keyframes fall{to{transform:translate3d(var(--drift),110vh,0) rotate(760deg);opacity:.1}}
     .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
     .auth{max-width:560px;margin:28px auto}
+
+    .wheel-card{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(139,92,246,.18),transparent 24rem),linear-gradient(180deg,rgba(22,32,56,.98),rgba(13,20,36,.98))}
+    .wheel-card::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 18%,rgba(124,58,237,.08) 22%,transparent 28% 48%,rgba(56,189,248,.06) 54%,transparent 60% 100%);animation:ambientSpin 18s linear infinite;pointer-events:none}
+    @keyframes ambientSpin{to{transform:rotate(360deg)}}
+    .wheel-stage{position:relative;z-index:1;max-width:560px;margin:0 auto 16px;padding:18px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.04),transparent 62%),linear-gradient(145deg,#1f2b49,#0b1220);box-shadow:inset 0 0 0 2px rgba(255,255,255,.06),inset 0 0 45px rgba(124,58,237,.15),0 0 0 10px rgba(10,16,31,.7),0 24px 50px rgba(0,0,0,.42)}
+    .wheel-stage::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid rgba(167,139,250,.26);box-shadow:0 0 28px rgba(124,58,237,.28),inset 0 0 18px rgba(124,58,237,.16);pointer-events:none}
+    .wheel-wrap{margin:0}
+    .pointer{top:-8px;border-left-width:22px;border-right-width:22px;border-top-width:42px;border-top-color:#f8fafc;filter:drop-shadow(0 0 9px rgba(255,255,255,.7)) drop-shadow(0 5px 6px rgba(0,0,0,.55))}
+    .spin-caption{position:relative;z-index:1;margin:4px 0 14px;color:var(--muted);font-size:.9rem}
+    .spin-button{position:relative;z-index:1;overflow:hidden;box-shadow:0 12px 28px rgba(124,58,237,.28)}
+    .spin-button::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 0 38%,rgba(255,255,255,.18) 48%,transparent 58% 100%);transform:translateX(-130%);animation:buttonShine 3.8s ease-in-out infinite}
+    @keyframes buttonShine{0%,55%{transform:translateX(-130%)}78%,100%{transform:translateX(130%)}}
+    .wheel-status{position:relative;z-index:1;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+    .wheel-chip{border:1px solid rgba(167,139,250,.28);background:rgba(13,23,40,.72);color:#d8dff0;border-radius:999px;padding:6px 10px;font-size:.76rem;font-weight:800}
+    .reveal-flash{animation:revealPulse .75s ease-out}
+    @keyframes revealPulse{0%{transform:scale(.97);filter:brightness(1.6)}55%{transform:scale(1.015)}100%{transform:scale(1);filter:brightness(1)}}
+
     @media(max-width:680px){
       .grid2,.grid3{grid-template-columns:1fr}
       .hero-stats{grid-template-columns:1fr 1fr}
@@ -151,7 +168,14 @@
     </section>
 
     <section class="card wheel-card">
-      <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="620" height="620"></canvas></div>
+      <div class="wheel-status">
+        <span class="wheel-chip">🐺 Howling Meeple Pick</span>
+        <span class="wheel-chip" id="wheelEligibleChip">0 eligible games</span>
+      </div>
+      <div class="wheel-stage">
+        <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="620" height="620"></canvas></div>
+      </div>
+      <div class="spin-caption">The wheel chooses from every game matching tonight’s filters.</div>
       <button id="spin" class="primary spin-button" disabled>SPIN FOR TONIGHT'S GAME</button>
     </section>
 
@@ -203,7 +227,7 @@ const el={
  bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),syncPill:$('syncPill'),
  scope:$('scope'),players:$('players'),time:$('time'),clearFilters:$('clearFilters'),
  collectionCount:$('collectionCount'),eligibleCount:$('eligibleCount'),passCount:$('passCount'),playCount:$('playCount'),
- wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),
+ wheel:$('wheel'),spin:$('spin'),wheelEligibleChip:$('wheelEligibleChip'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),
  gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),
  gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),play:$('play'),pass:$('pass'),
  spinAgain:$('spinAgain'),confetti:$('confetti'),history:$('history'),reset:$('reset')
@@ -323,20 +347,46 @@ function applyFilters(){
   return true
  });
  el.collectionCount.textContent=games.filter(g=>g.owned).length;
- el.eligibleCount.textContent=eligible.length;
+ el.eligibleCount.textContent=eligible.length;el.wheelEligibleChip.textContent=`${eligible.length} eligible game${eligible.length===1?'':'s'}`;
  const vals=[...dmap.values()];
  el.passCount.textContent=vals.filter(x=>x.decision==='pass').length;
  el.playCount.textContent=vals.filter(x=>x.decision==='play').length;
  el.spin.disabled=!eligible.length||spinning;drawWheel();renderHistory()
 }
 function drawWheel(){
- const w=el.wheel.width,h=el.wheel.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-18;
+ const w=el.wheel.width,h=el.wheel.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-22;
  ctx.clearRect(0,0,w,h);
- if(!eligible.length){ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cbd5e1';ctx.font='700 27px sans-serif';ctx.textAlign='center';ctx.fillText(games.length?'No games match':'Import your collection',cx,cy);return}
- const wedges=16,arc=Math.PI*2/wedges;
- for(let i=0;i<wedges;i++){const s=rotation+i*arc;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,s+arc);ctx.closePath();ctx.fillStyle=`hsl(${(i*37)%360} 65% 48%)`;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.22)';ctx.stroke()}
- ctx.beginPath();ctx.arc(cx,cy,58,0,Math.PI*2);ctx.fillStyle='#101827';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();
- ctx.fillStyle='#fff';ctx.font='800 28px sans-serif';ctx.textAlign='center';ctx.fillText('🎲',cx,cy+10)
+ const glow=ctx.createRadialGradient(cx,cy,r*.55,cx,cy,r);
+ glow.addColorStop(0,'rgba(124,58,237,.02)');glow.addColorStop(.82,'rgba(124,58,237,.08)');glow.addColorStop(1,'rgba(167,139,250,.35)');
+ ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,r+10,0,Math.PI*2);ctx.fill();
+ if(!eligible.length){
+   ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=4;ctx.stroke();
+   ctx.fillStyle='#cbd5e1';ctx.font='700 27px sans-serif';ctx.textAlign='center';
+   ctx.fillText(games.length?'No games match':'Import your collection',cx,cy-6);
+   ctx.font='500 16px sans-serif';ctx.fillStyle='#94a3b8';
+   ctx.fillText(games.length?'Adjust tonight’s filters':'Then come back and spin',cx,cy+25);
+   return;
+ }
+ const wedges=18,arc=Math.PI*2/wedges;
+ for(let i=0;i<wedges;i++){
+   const s=rotation+i*arc,hue=(262+i*23)%360;
+   const grad=ctx.createRadialGradient(cx,cy,r*.08,cx,cy,r);
+   grad.addColorStop(0,`hsl(${hue} 58% 28%)`);grad.addColorStop(.72,`hsl(${hue} 67% 46%)`);grad.addColorStop(1,`hsl(${hue} 72% 35%)`);
+   ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,s+arc);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+   ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=2;ctx.stroke();
+   ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.font='700 22px sans-serif';
+   ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillText(i%2===0?'🐾':'✦',r-28,7);ctx.restore();
+ }
+ ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(248,250,252,.7)';ctx.lineWidth=7;ctx.stroke();
+ ctx.beginPath();ctx.arc(cx,cy,r-8,0,Math.PI*2);ctx.strokeStyle='rgba(15,23,42,.9)';ctx.lineWidth=4;ctx.stroke();
+ const hub=ctx.createRadialGradient(cx-16,cy-18,8,cx,cy,72);
+ hub.addColorStop(0,'#4c1d95');hub.addColorStop(.58,'#241447');hub.addColorStop(1,'#0f172a');
+ ctx.beginPath();ctx.arc(cx,cy,67,0,Math.PI*2);ctx.fillStyle=hub;ctx.fill();
+ ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=5;ctx.stroke();
+ ctx.beginPath();ctx.arc(cx,cy,53,0,Math.PI*2);ctx.strokeStyle='rgba(167,139,250,.55)';ctx.lineWidth=2;ctx.stroke();
+ ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='800 36px sans-serif';ctx.fillText('🐺',cx,cy+12);
+ ctx.font='800 11px sans-serif';ctx.fillStyle='rgba(255,255,255,.72)';ctx.fillText('HOWLING MEEPLE',cx,cy+39);
 }
 function spin(){
  if(spinning||!eligible.length)return;spinning=true;el.spin.disabled=true;el.result.classList.add('hidden');
@@ -355,7 +405,7 @@ function showGame(g){
  el.dizedLink.href=`https://www.google.com/search?q=${encodeURIComponent('site:dized.com '+g.name+' tutorial')}`;
  el.art.style.display='none';el.art.removeAttribute('src');
  if(g.image_url){el.art.src=g.image_url;el.art.style.display='block'}else tryArtwork(g);
- el.result.classList.remove('hidden');confetti();el.result.scrollIntoView({behavior:'smooth',block:'start'})
+ el.result.classList.remove('hidden');el.result.classList.remove('reveal-flash');void el.result.offsetWidth;el.result.classList.add('reveal-flash');confetti();el.result.scrollIntoView({behavior:'smooth',block:'start'})
 }
 async function tryArtwork(g){
  try{
