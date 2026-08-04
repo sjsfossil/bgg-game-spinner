@@ -83,7 +83,7 @@
     <div class="brand-icon">🐺</div>
     <div>
       <h1>The Howling Meeple Companion</h1>
-      <p class="muted">Choose tonight's game from your own collection.</p>
+      <p class="muted">A shared game-night collection for your household.</p>
     </div>
   </header>
 
@@ -209,7 +209,7 @@ const el={
  spinAgain:$('spinAgain'),confetti:$('confetti'),history:$('history'),reset:$('reset')
 };
 const ctx=el.wheel.getContext('2d');
-let user=null,games=[],eligible=[],decisions=[],current=null,rotation=0,spinning=false,saveTimer=null;
+let user=null,householdId=null,games=[],eligible=[],decisions=[],current=null,rotation=0,spinning=false,saveTimer=null;
 
 function status(target,msg,type=''){target.textContent=msg;target.className='status '+type}
 function num(v){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(String(v).replace(/,/g,''));return Number.isFinite(n)?n:null}
@@ -231,7 +231,7 @@ function parseCSV(text){
 }
 function csvToGame(r){
  const minPlay=num(r.minplaytime),maxPlay=num(r.maxplaytime),playing=num(r.playingtime);
- return{user_id:user.id,bgg_id:num(r.objectid),name:r.objectname||r.name||'',year_published:num(r.yearpublished),
+ return{user_id:user.id,household_id:householdId,bgg_id:num(r.objectid),name:r.objectname||r.name||'',year_published:num(r.yearpublished),
  owned:bool(r.own),num_plays:num(r.numplays)||0,item_type:r.itemtype||r.objecttype||'',min_players:num(r.minplayers),
  max_players:num(r.maxplayers),min_play_time:minPlay,max_play_time:maxPlay??playing,average_rating:num(r.average)||num(r.baverage),
  weight:num(r.avgweight)||num(r.weight),comment:r.comment||'',private_comment:r.privatecomment||'',updated_at:new Date().toISOString()}
@@ -245,27 +245,33 @@ async function signIn(){
 }
 async function enterApp(u){
  user=u;el.authCard.classList.add('hidden');el.app.classList.remove('hidden');el.accountEmail.textContent=u.email||'Signed in';
+ const {data:membership,error}=await sb.from('household_members').select('household_id,role').eq('user_id',u.id).limit(1).maybeSingle();
+ if(error||!membership){
+   status(el.syncStatus,'This account has not been added to a household yet. Run the household migration in Supabase.','error');
+   return;
+ }
+ householdId=membership.household_id;
  await Promise.all([loadGames(),loadDecisions(),loadSettings()]);applyFilters()
 }
 async function loadGames(){
  status(el.syncStatus,'Loading your collection from Supabase…');
- const{data,error}=await sb.from('games').select('*').order('name');
+ const{data,error}=await sb.from('games').select('*').eq('household_id',householdId).order('name');
  if(error)return status(el.syncStatus,'Database error: '+error.message,'error');
  games=data||[];status(el.syncStatus,`Loaded ${games.length} games from the database.`,'ok');applyFilters()
 }
 async function loadDecisions(){
- const{data,error}=await sb.from('game_decisions').select('id,game_id,decision,created_at').order('created_at',{ascending:false});
+ const{data,error}=await sb.from('game_decisions').select('id,game_id,decision,created_at').eq('household_id',householdId).order('created_at',{ascending:false});
  if(error)return status(el.syncStatus,'Decision sync error: '+error.message,'error');
  decisions=data||[];renderHistory()
 }
 async function loadSettings(){
- const{data}=await sb.from('user_settings').select('*').maybeSingle();
+ const{data}=await sb.from('household_settings').select('*').eq('household_id',householdId).maybeSingle();
  if(data){el.scope.value=data.game_scope||'unplayed';el.players.value=data.player_count||'';el.time.value=data.available_minutes||'';el.bggUsername.value=data.bgg_username||''}
 }
 async function saveSettings(){
  if(!user)return;
- await sb.from('user_settings').upsert({user_id:user.id,bgg_username:el.bggUsername.value.trim()||null,game_scope:el.scope.value,
- player_count:num(el.players.value),available_minutes:num(el.time.value),exclude_expansions:true,updated_at:new Date().toISOString()},{onConflict:'user_id'})
+ await sb.from('household_settings').upsert({household_id:householdId,bgg_username:el.bggUsername.value.trim()||null,game_scope:el.scope.value,
+ player_count:num(el.players.value),available_minutes:num(el.time.value),exclude_expansions:true,updated_at:new Date().toISOString()},{onConflict:'household_id'})
 }
 function queueSettings(){clearTimeout(saveTimer);saveTimer=setTimeout(saveSettings,450);applyFilters()}
 
@@ -279,7 +285,7 @@ async function importCSV(file){
  let done=0;
  for(let i=0;i<deduped.length;i+=100){
   const chunk=deduped.slice(i,i+100);
-  const{error}=await sb.from('games').upsert(chunk,{onConflict:'user_id,bgg_id'});
+  const{error}=await sb.from('games').upsert(chunk,{onConflict:'household_id,bgg_id'});
   if(error)return status(el.syncStatus,`Upload stopped after ${done} games: ${error.message}`,'error');
   done+=chunk.length;status(el.syncStatus,`Uploaded ${done} of ${deduped.length} games…`)
  }
@@ -292,7 +298,7 @@ async function syncWithBgg(){
  el.syncBgg.disabled=true;status(el.syncStatus,'Attempting BGG synchronization…');
  try{
   await saveSettings();
-  const{data,error}=await sb.functions.invoke('sync-bgg-collection',{body:{username}});
+  const{data,error}=await sb.functions.invoke('sync-bgg-collection',{body:{username,householdId}});
   if(error)throw error;if(data?.error)throw new Error(data.error);
   status(el.syncStatus,`Sync complete: ${data.total||0} games • ${data.newGames||0} new • ${data.artworkAdded||0} artwork links added`,'ok');
   el.syncPill.innerHTML='<i class="dot green"></i><span>BGG sync ready</span>';
@@ -353,7 +359,7 @@ function showGame(g){
 }
 async function tryArtwork(g){
  try{
-  const{data,error}=await sb.functions.invoke('fetch-bgg-art',{body:{bggId:g.bgg_id,gameId:g.id}});
+  const{data,error}=await sb.functions.invoke('fetch-bgg-art',{body:{bggId:g.bgg_id,gameId:g.id,householdId}});
   if(error)throw error;const url=data?.imageUrl||data?.thumbnailUrl;if(!url)return;
   g.image_url=data.imageUrl||url;g.thumbnail_url=data.thumbnailUrl||null;el.art.src=url;el.art.style.display='block'
  }catch(error){console.error(error)}
@@ -366,7 +372,7 @@ function confetti(){
 }
 async function decide(decision){
  if(!current)return;
- const{error}=await sb.from('game_decisions').insert({user_id:user.id,game_id:current.id,decision,player_count:num(el.players.value),available_minutes:num(el.time.value)});
+ const{error}=await sb.from('game_decisions').insert({user_id:user.id,household_id:householdId,game_id:current.id,decision,player_count:num(el.players.value),available_minutes:num(el.time.value)});
  if(error)return status(el.syncStatus,'Could not save decision: '+error.message,'error');
  await loadDecisions();current=null;el.result.classList.add('hidden');applyFilters()
 }
@@ -378,7 +384,7 @@ function renderHistory(){
 }
 async function resetDecisions(){
  if(!confirm('Clear all synced Play/Pass decisions?'))return;
- const{error}=await sb.from('game_decisions').delete().eq('user_id',user.id);
+ const{error}=await sb.from('game_decisions').delete().eq('household_id',householdId);
  if(error)return status(el.syncStatus,error.message,'error');decisions=[];applyFilters()
 }
 
