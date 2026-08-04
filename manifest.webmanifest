@@ -1,9 +1,9 @@
 {
-  "name": "BGG Game Spinner",
-  "short_name": "BGG Spinner",
+  "name": "The Howling Meeple Companion",
+  "short_name": "Howling Meeple",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0b1020",
-  "theme_color": "#111827",
-  "description": "A synced BoardGameGeek collection spinner."
+  "background_color": "#08101f",
+  "theme_color": "#0b1020",
+  "description": "A synced board game collection companion and game-night spinner."
 }

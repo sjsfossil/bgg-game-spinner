@@ -1,30 +1,23 @@
-BGG Game Spinner v6 — Supabase Database
+The Howling Meeple Companion v7.1
 
 Upload these files to the root of your GitHub repository:
 - index.html
 - manifest.webmanifest
 - sw.js
 
-Do not upload collection.csv. The collection is imported into Supabase from inside the app.
+The app works now with:
+- Supabase login and database
+- CSV import fallback
+- Synced Play/Pass decisions
+- Player count and time filters
+- No plays versus all owned games
+- Scalable generic wheel
+- Reveal card, BGG comments, BGG link, Dized search, and confetti
 
-First use:
-1. Publish the files with GitHub Pages.
-2. Open the site and refresh.
-3. Sign in with the user created in Supabase Authentication.
-4. Tap Import or update BGG CSV.
-5. Choose the CSV exported from BoardGameGeek.
-6. Wait for the import-complete message.
+BGG Sync:
+- The button is already present.
+- While BGG approval/token setup is pending, CSV import continues to work.
+- Once the sync-bgg-collection function and BGG_API_TOKEN are ready, the same button becomes functional.
 
-Synced across devices:
-- Collection
-- Play/Pass decisions
-- Game scope, player count, and maximum time settings
-
-The Supabase publishable key is intentionally present in index.html. Security depends on Row Level Security.
-Never place a Supabase secret or service-role key in these files.
-
-
-v6.1 fix: Removes duplicate BGG IDs from an import before sending upsert batches to Supabase. Re-importing after a partial upload is safe.
-
-
-Version 6.2 fixes blank player-count and time fields being treated as zero.
+Open after publishing:
+https://sjsfossil.github.io/bgg-game-spinner/?v=7.1
