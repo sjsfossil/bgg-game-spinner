@@ -71,10 +71,13 @@
     .comments.empty{color:var(--muted);font-style:italic}
     .hidden{display:none!important}
     label.check{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.95rem}
-    select{
-      background:#0f172a;color:var(--text);border:1px solid var(--line);
-      border-radius:12px;padding:10px;font-size:1rem;
+    select,input[type=number]{
+      width:100%;background:#0f172a;color:var(--text);border:1px solid var(--line);
+      border-radius:12px;padding:11px;font-size:1rem;
     }
+    .filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .field{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:.9rem}
+    .field span{font-weight:700;color:var(--text)}
     .small{font-size:.88rem;color:var(--muted)}
     .history-item{
       display:flex;justify-content:space-between;gap:8px;padding:9px 0;
@@ -82,7 +85,8 @@
     }
     .badge{font-size:.75rem;font-weight:700;padding:4px 8px;border-radius:999px;background:#334155}
     .badge.played{background:#14532d}.badge.passed{background:#374151}
-    @media (max-width:520px){
+    @media (max-width:620px){
+      .filter-grid{grid-template-columns:1fr}
       .stats{grid-template-columns:1fr 1fr 1fr}
       button,.file-label{width:100%;text-align:center}
       .row.actions button{width:calc(50% - 5px)}
@@ -92,7 +96,7 @@
 <body>
   <main class="wrap">
     <h1>🎲 BGG Game Spinner</h1>
-    <p class="sub">Import your BoardGameGeek collection and pick an unplayed game.</p>
+    <p class="sub">Choose the group size and available time, then spin for a game from your collection.</p>
 
     <section class="card">
       <div class="row">
@@ -101,10 +105,36 @@
         <button id="hostedBtn">Load Hosted Collection</button>
         <button id="reloadBtn">Reload This Device’s Import</button>
       </div>
+      <div class="filter-grid" style="margin-top:14px">
+        <label class="field">
+          <span>Games to include</span>
+          <select id="playScope">
+            <option value="unplayed" selected>No plays only</option>
+            <option value="all">All owned games</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Player count</span>
+          <input id="playerCount" type="number" min="1" max="99" inputmode="numeric" placeholder="Any" />
+        </label>
+        <label class="field">
+          <span>Maximum play time</span>
+          <select id="maxTime">
+            <option value="" selected>Any length</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+            <option value="180">3 hours</option>
+            <option value="240">4 hours</option>
+          </select>
+        </label>
+      </div>
       <div class="row" style="margin-top:12px">
         <label class="check"><input id="excludeExpansions" type="checkbox" checked> Exclude expansions</label>
         <label class="check"><input id="ownedOnly" type="checkbox" checked> Owned only</label>
-        <label class="check"><input id="unplayedOnly" type="checkbox" checked> No logged plays only</label>
+        <button id="clearFiltersBtn" type="button">Clear game-night filters</button>
       </div>
       <p id="importMessage" class="small">No collection imported yet.</p>
       <div class="stats">
@@ -148,7 +178,10 @@ const els = {
   reload: document.getElementById('reloadBtn'),
   excludeExpansions: document.getElementById('excludeExpansions'),
   ownedOnly: document.getElementById('ownedOnly'),
-  unplayedOnly: document.getElementById('unplayedOnly'),
+  playScope: document.getElementById('playScope'),
+  playerCount: document.getElementById('playerCount'),
+  maxTime: document.getElementById('maxTime'),
+  clearFilters: document.getElementById('clearFiltersBtn'),
   importMessage: document.getElementById('importMessage'),
   totalCount: document.getElementById('totalCount'),
   passedCount: document.getElementById('passedCount'),
@@ -218,9 +251,9 @@ function mapGame(row, index){
     subtype: firstValue(row,['itemtype','subtype','type']).toLowerCase(),
     comment: [firstValue(row,['comment','comments','usercomment','user comment','notes']), firstValue(row,['privatecomment','private comment'])].filter(Boolean).join('\n\n'),
     year: firstValue(row,['yearpublished','year published','year']),
-    minplayers: firstValue(row,['minplayers','min players']),
-    maxplayers: firstValue(row,['maxplayers','max players']),
-    playingtime: firstValue(row,['playingtime','playing time','playtime']),
+    minplayers: toNumber(firstValue(row,['minplayers','min players'])),
+    maxplayers: toNumber(firstValue(row,['maxplayers','max players'])),
+    playingtime: toNumber(firstValue(row,['playingtime','playing time','playtime'])) ,
     rating: firstValue(row,['rating','bgg rating']),
     raw: row
   };
@@ -229,8 +262,20 @@ function applyFilters(){
   eligibleGames = allGames.filter(g => {
     if(!g.name) return false;
     if(els.ownedOnly.checked && g.own !== 1) return false;
-    if(els.unplayedOnly.checked && g.numplays !== 0) return false;
+    if(els.playScope.value === 'unplayed' && g.numplays !== 0) return false;
     if(els.excludeExpansions.checked && (g.subtype.includes('expansion') || (g.subtype && g.subtype !== 'standalone'))) return false;
+
+    const requestedPlayers = toNumber(els.playerCount.value);
+    if(requestedPlayers > 0){
+      if(g.minplayers <= 0 || g.maxplayers <= 0) return false;
+      if(requestedPlayers < g.minplayers || requestedPlayers > g.maxplayers) return false;
+    }
+
+    const maximumMinutes = toNumber(els.maxTime.value);
+    if(maximumMinutes > 0){
+      if(g.playingtime <= 0 || g.playingtime > maximumMinutes) return false;
+    }
+
     if(decisions[g.id]) return false;
     return true;
   });
@@ -257,7 +302,7 @@ function drawWheel(){
   if(!eligibleGames.length){
     ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#cbd5e1';ctx.font='700 28px -apple-system, sans-serif';ctx.textAlign='center';
-    ctx.fillText('Import your BGG CSV',cx,cy);
+    ctx.fillText(allGames.length ? 'No games match filters' : 'Import your BGG CSV',cx,cy);
     return;
   }
   const shown = eligibleGames.slice(0,80);
@@ -367,7 +412,14 @@ els.reload.addEventListener('click',()=>{
   if(text) loadText(text,false,'this device’s saved CSV');
   else els.importMessage.textContent='No saved import was found on this device.';
 });
-[els.excludeExpansions,els.ownedOnly,els.unplayedOnly].forEach(el=>el.addEventListener('change',applyFilters));
+[els.excludeExpansions,els.ownedOnly,els.playScope,els.maxTime].forEach(el=>el.addEventListener('change',applyFilters));
+els.playerCount.addEventListener('input',applyFilters);
+els.clearFilters.addEventListener('click',()=>{
+  els.playScope.value='unplayed';
+  els.playerCount.value='';
+  els.maxTime.value='';
+  applyFilters();
+});
 els.spin.addEventListener('click',spinWheel);
 els.play.addEventListener('click',()=>decide('played'));
 els.pass.addEventListener('click',()=>decide('passed'));

@@ -1,15 +1,15 @@
-BGG Game Spinner v3 — Cross-device collection
+BGG Game Spinner v4
 
-Upload these files to the ROOT of the same GitHub repository:
-- index.html
-- manifest.webmanifest
-- sw.js
-- collection.csv
+NEW FILTERS
+- No plays only or all owned games
+- Exact player count supported by the game
+- Maximum BGG playing time
 
-The app automatically loads collection.csv whenever it opens, so the same collection appears in any browser.
+GITHUB UPDATE
+Replace index.html, manifest.webmanifest, sw.js, and collection.csv in the repository root.
+After committing, open the site with ?v=4 once to bypass an old Safari cache.
 
-To update the collection, export a fresh BGG CSV, rename it collection.csv, replace the existing GitHub file, and commit the change.
-
-PRIVACY: A public GitHub Pages site also makes collection.csv publicly accessible. It may contain comments or private comments. Remove anything you do not want exposed. True private syncing requires authentication and a cloud database.
-
-Play/Pass decisions remain stored separately in each browser. Syncing those decisions also requires a cloud database and sign-in.
+FILTER BEHAVIOR
+- Player count keeps games where minplayers <= entered count <= maxplayers.
+- Maximum time keeps games with BGG playingtime at or below the selected limit.
+- Games missing player-count or play-time data are excluded only when that particular filter is active.
