@@ -236,9 +236,31 @@ async function importCSV(file){
   if(!file)return;
   status(el.syncStatus,'Reading BGG CSV…');
   const rows=parseCSV(await file.text());
-  const mapped=rows.map(csvToGame).filter(g=>g.bgg_id&&g.name);
+  const parsed=rows.map(csvToGame).filter(g=>g.bgg_id&&g.name);
+  const uniqueByBggId=new Map();
+  for(const game of parsed){
+    const existing=uniqueByBggId.get(game.bgg_id);
+    if(!existing){
+      uniqueByBggId.set(game.bgg_id,game);
+      continue;
+    }
+    // Prefer an owned row and preserve any useful comment/details from either duplicate.
+    uniqueByBggId.set(game.bgg_id,{
+      ...existing,
+      ...game,
+      owned: existing.owned || game.owned,
+      comment: game.comment || existing.comment || '',
+      private_comment: game.private_comment || existing.private_comment || '',
+      min_players: game.min_players ?? existing.min_players,
+      max_players: game.max_players ?? existing.max_players,
+      min_play_time: game.min_play_time ?? existing.min_play_time,
+      max_play_time: game.max_play_time ?? existing.max_play_time
+    });
+  }
+  const mapped=[...uniqueByBggId.values()];
   if(!mapped.length)return status(el.syncStatus,'No recognizable BGG games were found in that CSV.','error');
-  status(el.syncStatus,`Uploading ${mapped.length} games…`);
+  const duplicateCount=parsed.length-mapped.length;
+  status(el.syncStatus,`Uploading ${mapped.length} unique games${duplicateCount?` (${duplicateCount} duplicate rows removed)`:''}…`);
   let done=0;
   for(let i=0;i<mapped.length;i+=100){
     const chunk=mapped.slice(i,i+100);

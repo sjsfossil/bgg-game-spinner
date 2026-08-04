@@ -22,3 +22,6 @@ Synced across devices:
 
 The Supabase publishable key is intentionally present in index.html. Security depends on Row Level Security.
 Never place a Supabase secret or service-role key in these files.
+
+
+v6.1 fix: Removes duplicate BGG IDs from an import before sending upsert batches to Supabase. Re-importing after a partial upload is safe.
