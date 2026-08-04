@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#111827" />
-  <title>BGG Game Spinner</title>
+  <title>BGG Game Night Spinner</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
     :root{
@@ -69,6 +69,27 @@
       padding:14px;white-space:pre-wrap;line-height:1.45;
     }
     .comments.empty{color:var(--muted);font-style:italic}
+    .reveal-card{overflow:hidden;padding:0;background:linear-gradient(180deg,#18213a,#111827)}
+    .hero{position:relative;min-height:280px;background:#0f172a;display:grid;place-items:center;overflow:hidden}
+    .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,16,32,.05),rgba(11,16,32,.95))}
+    .hero img{width:100%;height:340px;object-fit:contain;padding:18px;position:relative;z-index:1}
+    .hero img.failed{display:none}
+    .art-placeholder{position:absolute;inset:0;display:grid;place-items:center;font-size:5rem;color:var(--muted)}
+    .reveal-body{padding:18px}
+    .reveal-title{font-size:1.75rem;line-height:1.15;font-weight:900;text-align:center;margin:0 0 6px}
+    .reveal-year{text-align:center;color:var(--muted);margin-bottom:16px}
+    .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0}
+    .detail{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:11px 7px;text-align:center}
+    .detail strong{display:block;font-size:1rem}.detail span{display:block;color:var(--muted);font-size:.75rem;margin-top:3px}
+    .section-title{font-weight:800;margin:16px 0 8px}
+    .external-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .link-button{display:block;text-decoration:none;text-align:center;border-radius:14px;padding:13px 12px;font-weight:800;background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+    .link-button.dized{background:#1e3a5f}.link-button.bgg{background:#713f12}
+    .decision-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+    .decision-actions button{width:100%}
+    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999}
+    .confetti-piece{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:fall 1.8s linear forwards}
+    @keyframes fall{to{transform:translate3d(var(--drift),110vh,rotate(720deg));opacity:.2}}
     .hidden{display:none!important}
     label.check{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.95rem}
     select,input[type=number]{
@@ -90,6 +111,9 @@
       .stats{grid-template-columns:1fr 1fr 1fr}
       button,.file-label{width:100%;text-align:center}
       .row.actions button{width:calc(50% - 5px)}
+      .detail-grid{grid-template-columns:1fr 1fr}
+      .decision-actions{grid-template-columns:1fr}
+      .external-actions{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -152,15 +176,34 @@
       <button id="spinBtn" class="primary" style="width:100%" disabled>SPIN THE WHEEL</button>
     </section>
 
-    <section id="resultCard" class="card hidden">
-      <div id="winner" class="winner"></div>
-      <div id="meta" class="meta"></div>
-      <div id="comments" class="comments empty"></div>
-      <div class="row actions" style="margin-top:14px">
-        <button id="playBtn" class="play">Play It</button>
-        <button id="passBtn" class="pass">Pass</button>
+    <section id="resultCard" class="card reveal-card hidden">
+      <div class="hero">
+        <div class="art-placeholder">🎲</div>
+        <img id="gameArt" alt="Selected game box art" />
+      </div>
+      <div class="reveal-body">
+        <h2 id="winner" class="reveal-title"></h2>
+        <div id="gameYear" class="reveal-year"></div>
+        <div class="detail-grid">
+          <div class="detail"><strong id="playersDetail">—</strong><span>Players</span></div>
+          <div class="detail"><strong id="timeDetail">—</strong><span>Play time</span></div>
+          <div class="detail"><strong id="weightDetail">—</strong><span>Weight</span></div>
+          <div class="detail"><strong id="ratingDetail">—</strong><span>BGG rating</span></div>
+        </div>
+        <div class="section-title">Your BGG comments</div>
+        <div id="comments" class="comments empty"></div>
+        <div class="external-actions">
+          <a id="bggLink" class="link-button bgg" target="_blank" rel="noopener">View on BGG</a>
+          <a id="dizedLink" class="link-button dized" target="_blank" rel="noopener">Search Dized Tutorial</a>
+        </div>
+        <div class="decision-actions">
+          <button id="playBtn" class="play">Play It</button>
+          <button id="passBtn" class="pass">Pass</button>
+          <button id="spinAgainBtn">Spin Again</button>
+        </div>
       </div>
     </section>
+    <div id="confetti" class="confetti hidden"></div>
 
     <section class="card">
       <div class="row" style="justify-content:space-between">
@@ -190,7 +233,16 @@ const els = {
   canvas: document.getElementById('wheel'),
   resultCard: document.getElementById('resultCard'),
   winner: document.getElementById('winner'),
-  meta: document.getElementById('meta'),
+  gameYear: document.getElementById('gameYear'),
+  gameArt: document.getElementById('gameArt'),
+  playersDetail: document.getElementById('playersDetail'),
+  timeDetail: document.getElementById('timeDetail'),
+  weightDetail: document.getElementById('weightDetail'),
+  ratingDetail: document.getElementById('ratingDetail'),
+  bggLink: document.getElementById('bggLink'),
+  dizedLink: document.getElementById('dizedLink'),
+  spinAgain: document.getElementById('spinAgainBtn'),
+  confetti: document.getElementById('confetti'),
   comments: document.getElementById('comments'),
   play: document.getElementById('playBtn'),
   pass: document.getElementById('passBtn'),
@@ -253,8 +305,12 @@ function mapGame(row, index){
     year: firstValue(row,['yearpublished','year published','year']),
     minplayers: toNumber(firstValue(row,['minplayers','min players'])),
     maxplayers: toNumber(firstValue(row,['maxplayers','max players'])),
-    playingtime: toNumber(firstValue(row,['playingtime','playing time','playtime'])) ,
-    rating: firstValue(row,['rating','bgg rating']),
+    playingtime: toNumber(firstValue(row,['playingtime','playing time','playtime'])),
+    minplaytime: toNumber(firstValue(row,['minplaytime','min play time'])),
+    maxplaytime: toNumber(firstValue(row,['maxplaytime','max play time'])),
+    weight: firstValue(row,['avgweight','weight','average weight']),
+    rating: firstValue(row,['average','baverage','rating','bgg rating']),
+    imageid: firstValue(row,['imageid','image id']),
     raw: row
   };
 }
@@ -352,18 +408,51 @@ function spinWheel(){
   }
   requestAnimationFrame(animate);
 }
+function formatNumber(value, digits=1){
+  const n=Number(value);
+  return Number.isFinite(n) && n>0 ? n.toFixed(digits) : '—';
+}
+function launchConfetti(){
+  els.confetti.innerHTML='';
+  els.confetti.classList.remove('hidden');
+  const colors=['#f59e0b','#22c55e','#7c3aed','#38bdf8','#f43f5e','#f8fafc'];
+  for(let i=0;i<70;i++){
+    const piece=document.createElement('div');
+    piece.className='confetti-piece';
+    piece.style.left=`${Math.random()*100}%`;
+    piece.style.background=colors[i%colors.length];
+    piece.style.setProperty('--drift',`${(Math.random()-.5)*240}px`);
+    piece.style.animationDelay=`${Math.random()*.45}s`;
+    piece.style.transform=`rotate(${Math.random()*360}deg)`;
+    els.confetti.appendChild(piece);
+  }
+  setTimeout(()=>els.confetti.classList.add('hidden'),2400);
+}
 function showResult(g){
   els.winner.textContent=g.name;
-  const details=[];
-  if(g.year) details.push(g.year);
-  if(g.minplayers || g.maxplayers) details.push(`${g.minplayers || '?'}–${g.maxplayers || '?'} players`);
-  if(g.playingtime) details.push(`${g.playingtime} min`);
-  if(g.rating && g.rating !== 'N/A') details.push(`Rating: ${g.rating}`);
-  els.meta.textContent=details.join(' • ') || 'No additional details in the export';
+  els.gameYear.textContent=g.year ? `Published ${g.year}` : '';
+  els.playersDetail.textContent=(g.minplayers||g.maxplayers) ? `${g.minplayers||'?'}–${g.maxplayers||'?'}` : '—';
+  const minTime=g.minplaytime||g.playingtime;
+  const maxTime=g.maxplaytime||g.playingtime;
+  els.timeDetail.textContent=minTime ? (maxTime && maxTime!==minTime ? `${minTime}–${maxTime} min` : `${minTime} min`) : '—';
+  els.weightDetail.textContent=formatNumber(g.weight,1);
+  els.ratingDetail.textContent=formatNumber(g.rating,1);
   els.comments.textContent=g.comment || 'No BGG comments were included for this game.';
   els.comments.classList.toggle('empty',!g.comment);
+  els.bggLink.href=`https://boardgamegeek.com/boardgame/${encodeURIComponent(g.id)}`;
+  els.dizedLink.href=`https://dized.com/search/?q=${encodeURIComponent(g.name)}`;
+  els.gameArt.classList.remove('failed');
+  els.gameArt.alt=`${g.name} box art`;
+  if(g.imageid){
+    els.gameArt.src=`https://cf.geekdo-static.com/images/pic${encodeURIComponent(g.imageid)}.jpg`;
+  }else{
+    els.gameArt.removeAttribute('src');
+    els.gameArt.classList.add('failed');
+  }
+  els.gameArt.onerror=()=>els.gameArt.classList.add('failed');
   els.resultCard.classList.remove('hidden');
-  els.resultCard.scrollIntoView({behavior:'smooth',block:'center'});
+  launchConfetti();
+  els.resultCard.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function decide(status){
   if(!currentGame) return;
@@ -423,6 +512,7 @@ els.clearFilters.addEventListener('click',()=>{
 els.spin.addEventListener('click',spinWheel);
 els.play.addEventListener('click',()=>decide('played'));
 els.pass.addEventListener('click',()=>decide('passed'));
+els.spinAgain.addEventListener('click',()=>{ els.resultCard.classList.add('hidden'); spinWheel(); });
 els.reset.addEventListener('click',()=>{
   decisions={};localStorage.removeItem('bgg-spinner-decisions');applyFilters();
 });
@@ -430,7 +520,7 @@ drawWheel();updateStats();
 loadHostedCollection();
 
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=5').catch(()=>{}));
 }
 </script>
 </body>

@@ -1,10 +1,10 @@
 {
-  "name": "BGG Game Spinner",
-  "short_name": "BGG Spinner",
+  "name": "BGG Game Night Spinner",
+  "short_name": "Game Spinner",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0b1020",
   "theme_color": "#111827",
-  "description": "Cross-device spinner for an owned, unplayed BoardGameGeek collection.",
+  "description": "Choose a game from your BoardGameGeek collection.",
   "icons": []
 }
