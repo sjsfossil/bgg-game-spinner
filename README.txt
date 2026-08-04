@@ -25,3 +25,6 @@ Never place a Supabase secret or service-role key in these files.
 
 
 v6.1 fix: Removes duplicate BGG IDs from an import before sending upsert batches to Supabase. Re-importing after a partial upload is safe.
+
+
+Version 6.2 fixes blank player-count and time fields being treated as zero.

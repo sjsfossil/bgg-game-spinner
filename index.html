@@ -166,7 +166,7 @@ const ctx = el.wheel.getContext('2d');
 let user=null, games=[], eligible=[], decisions=[], current=null, rotation=0, spinning=false, saveTimer=null;
 
 function status(target,msg,type=''){ target.textContent=msg; target.className='status '+type; }
-function num(v){ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:null; }
+function num(v){ const cleaned=String(v??'').trim().replace(/,/g,''); if(cleaned==='') return null; const n=Number(cleaned); return Number.isFinite(n)?n:null; }
 function bool(v){ return String(v).trim()==='1'||String(v).toLowerCase()==='true'; }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
