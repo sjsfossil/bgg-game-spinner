@@ -1,527 +1,352 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111827" />
-  <title>BGG Game Night Spinner</title>
-  <link rel="manifest" href="manifest.webmanifest" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>BGG Game Spinner</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root{
+    :root {
       color-scheme: dark;
-      --bg:#0b1020;
-      --panel:#151c31;
-      --panel2:#1c2540;
-      --text:#f8fafc;
-      --muted:#a8b3cf;
-      --accent:#7c3aed;
-      --accent2:#22c55e;
-      --danger:#ef4444;
-      --line:#2d385a;
+      --bg:#0b1020; --panel:#151c31; --panel2:#1c2540; --text:#f8fafc;
+      --muted:#a8b3cf; --accent:#7c3aed; --green:#22c55e; --danger:#ef4444; --line:#2d385a;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-      background:linear-gradient(180deg,#0b1020,#10172b);
-      color:var(--text);
-      min-height:100vh;
-    }
-    .wrap{max-width:760px;margin:auto;padding:16px 16px calc(32px + env(safe-area-inset-bottom))}
-    h1{font-size:1.8rem;margin:10px 0 4px}
-    .sub{color:var(--muted);margin:0 0 18px}
-    .card{
-      background:rgba(21,28,49,.96);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      margin:14px 0;
-      box-shadow:0 12px 30px rgba(0,0,0,.25);
-    }
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b1020,#10172b);color:var(--text);min-height:100vh}
+    .wrap{max-width:780px;margin:auto;padding:16px 16px calc(34px + env(safe-area-inset-bottom))}
+    h1{font-size:1.85rem;margin:8px 0 4px} .sub,.muted{color:var(--muted)}
+    .card{background:rgba(21,28,49,.97);border:1px solid var(--line);border-radius:18px;padding:16px;margin:14px 0;box-shadow:0 12px 30px rgba(0,0,0,.24)}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    button,.file-label{
-      appearance:none;border:0;border-radius:14px;padding:13px 16px;
-      font-size:1rem;font-weight:700;cursor:pointer;
-      background:var(--panel2);color:var(--text);border:1px solid var(--line);
-    }
-    button.primary{background:var(--accent);border-color:transparent}
-    button.play{background:var(--accent2);color:#06120a;border-color:transparent}
-    button.pass{background:#374151}
-    button.danger{background:#7f1d1d}
-    button:disabled{opacity:.45;cursor:not-allowed}
+    .between{justify-content:space-between}
+    button,.button,label.file-label{appearance:none;border:1px solid var(--line);border-radius:13px;padding:12px 15px;font-size:1rem;font-weight:750;cursor:pointer;background:var(--panel2);color:var(--text);text-decoration:none;text-align:center}
+    button.primary{background:var(--accent);border-color:transparent} button.play{background:var(--green);color:#07130a;border-color:transparent}
+    button.pass{background:#374151} button.danger{background:#7f1d1d} button:disabled{opacity:.48;cursor:not-allowed}
+    input,select{width:100%;background:#0f172a;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px;font-size:1rem}
     input[type=file]{display:none}
+    .field{display:flex;flex-direction:column;gap:7px;font-size:.9rem} .field>span{font-weight:750}
+    .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
     .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
     .stat{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
-    .stat strong{display:block;font-size:1.35rem}
-    .stat span{color:var(--muted);font-size:.82rem}
-    .wheel-wrap{position:relative;display:grid;place-items:center;margin:8px auto 14px}
-    canvas{max-width:100%;height:auto;filter:drop-shadow(0 10px 22px rgba(0,0,0,.35))}
-    .pointer{
-      position:absolute;top:4px;width:0;height:0;
-      border-left:18px solid transparent;border-right:18px solid transparent;
-      border-top:32px solid #f8fafc;z-index:3;
-      filter:drop-shadow(0 4px 5px rgba(0,0,0,.4));
-    }
-    .winner{font-size:1.5rem;font-weight:800;text-align:center;margin:8px 0}
-    .meta{color:var(--muted);text-align:center;margin-bottom:12px}
-    .comments{
-      background:#0f172a;border:1px solid var(--line);border-radius:14px;
-      padding:14px;white-space:pre-wrap;line-height:1.45;
-    }
-    .comments.empty{color:var(--muted);font-style:italic}
-    .reveal-card{overflow:hidden;padding:0;background:linear-gradient(180deg,#18213a,#111827)}
-    .hero{position:relative;min-height:280px;background:#0f172a;display:grid;place-items:center;overflow:hidden}
-    .hero::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,16,32,.05),rgba(11,16,32,.95))}
-    .hero img{width:100%;height:340px;object-fit:contain;padding:18px;position:relative;z-index:1}
-    .hero img.failed{display:none}
-    .art-placeholder{position:absolute;inset:0;display:grid;place-items:center;font-size:5rem;color:var(--muted)}
-    .reveal-body{padding:18px}
-    .reveal-title{font-size:1.75rem;line-height:1.15;font-weight:900;text-align:center;margin:0 0 6px}
-    .reveal-year{text-align:center;color:var(--muted);margin-bottom:16px}
-    .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:14px 0}
-    .detail{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:11px 7px;text-align:center}
-    .detail strong{display:block;font-size:1rem}.detail span{display:block;color:var(--muted);font-size:.75rem;margin-top:3px}
-    .section-title{font-weight:800;margin:16px 0 8px}
-    .external-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    .link-button{display:block;text-decoration:none;text-align:center;border-radius:14px;padding:13px 12px;font-weight:800;background:var(--panel2);color:var(--text);border:1px solid var(--line)}
-    .link-button.dized{background:#1e3a5f}.link-button.bgg{background:#713f12}
-    .decision-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
-    .decision-actions button{width:100%}
-    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999}
-    .confetti-piece{position:absolute;top:-20px;width:10px;height:16px;border-radius:2px;animation:fall 1.8s linear forwards}
-    @keyframes fall{to{transform:translate3d(var(--drift),110vh,rotate(720deg));opacity:.2}}
+    .stat strong{display:block;font-size:1.35rem} .stat span{font-size:.8rem;color:var(--muted)}
+    .status{margin-top:11px;color:var(--muted);white-space:pre-wrap} .status.error{color:#fca5a5} .status.ok{color:#86efac}
     .hidden{display:none!important}
-    label.check{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.95rem}
-    select,input[type=number]{
-      width:100%;background:#0f172a;color:var(--text);border:1px solid var(--line);
-      border-radius:12px;padding:11px;font-size:1rem;
-    }
-    .filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-    .field{display:flex;flex-direction:column;gap:7px;color:var(--muted);font-size:.9rem}
-    .field span{font-weight:700;color:var(--text)}
-    .small{font-size:.88rem;color:var(--muted)}
-    .history-item{
-      display:flex;justify-content:space-between;gap:8px;padding:9px 0;
-      border-bottom:1px solid var(--line)
-    }
-    .badge{font-size:.75rem;font-weight:700;padding:4px 8px;border-radius:999px;background:#334155}
-    .badge.played{background:#14532d}.badge.passed{background:#374151}
-    @media (max-width:620px){
-      .filter-grid{grid-template-columns:1fr}
-      .stats{grid-template-columns:1fr 1fr 1fr}
-      button,.file-label{width:100%;text-align:center}
-      .row.actions button{width:calc(50% - 5px)}
-      .detail-grid{grid-template-columns:1fr 1fr}
-      .decision-actions{grid-template-columns:1fr}
-      .external-actions{grid-template-columns:1fr}
-    }
+    .auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .wheel-wrap{position:relative;display:grid;place-items:center;margin:8px auto 14px}
+    canvas{max-width:100%;height:auto;filter:drop-shadow(0 10px 22px rgba(0,0,0,.34))}
+    .pointer{position:absolute;top:4px;border-left:18px solid transparent;border-right:18px solid transparent;border-top:32px solid #f8fafc;z-index:2}
+    .reveal{overflow:hidden;padding:0;background:linear-gradient(180deg,#18213a,#111827)}
+    .hero{position:relative;min-height:300px;background:#0f172a;display:grid;place-items:center;overflow:hidden}
+    .hero img{width:100%;height:360px;object-fit:contain;padding:18px;z-index:1}
+    .placeholder{position:absolute;font-size:5.5rem;color:var(--muted)} .body{padding:18px}
+    .title{font-size:1.8rem;line-height:1.15;text-align:center;margin:0 0 5px} .year{text-align:center;color:var(--muted)}
+    .details{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:15px 0}
+    .detail{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:11px 6px;text-align:center}
+    .detail strong{display:block} .detail span{font-size:.76rem;color:var(--muted)}
+    .comments{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:14px;white-space:pre-wrap;line-height:1.45}
+    .actions3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:13px}
+    .actions2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .history-item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+    .badge{font-size:.75rem;font-weight:800;padding:4px 8px;border-radius:999px;background:#334155} .badge.play{background:#14532d}
+    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999}
+    .piece{position:absolute;top:-24px;width:10px;height:17px;border-radius:2px;animation:fall 1.9s linear forwards}
+    @keyframes fall{0%{transform:translate3d(0,-20px,0) rotate(0)}100%{transform:translate3d(var(--drift),110vh,0) rotate(720deg);opacity:.15}}
+    @media(max-width:640px){.grid3,.auth-grid{grid-template-columns:1fr}.details{grid-template-columns:1fr 1fr}.actions3,.actions2{grid-template-columns:1fr}button,.button,label.file-label{width:100%}}
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <h1>🎲 BGG Game Spinner</h1>
-    <p class="sub">Choose the group size and available time, then spin for a game from your collection.</p>
+<main class="wrap">
+  <h1>🎲 BGG Game Spinner</h1>
+  <p class="sub">Your collection, filters, and Play/Pass choices now sync through Supabase.</p>
+
+  <section id="authCard" class="card">
+    <h2 style="margin-top:0">Sign in</h2>
+    <div class="auth-grid">
+      <label class="field"><span>Email</span><input id="email" type="email" autocomplete="email"></label>
+      <label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password"></label>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="signIn" class="primary">Sign In</button>
+    </div>
+    <div id="authStatus" class="status">Use the account you created in Supabase Authentication.</div>
+  </section>
+
+  <section id="app" class="hidden">
+    <section class="card">
+      <div class="row between">
+        <div><strong id="accountEmail"></strong><div class="muted" style="font-size:.86rem">Supabase connected</div></div>
+        <button id="signOut">Sign Out</button>
+      </div>
+    </section>
 
     <section class="card">
+      <h2 style="margin-top:0">Collection</h2>
       <div class="row">
-        <label class="file-label" for="csvFile">Import BGG CSV</label>
-        <input id="csvFile" type="file" accept=".csv,text/csv" />
-        <button id="hostedBtn">Load Hosted Collection</button>
-        <button id="reloadBtn">Reload This Device’s Import</button>
+        <label class="file-label" for="csv">Import or update BGG CSV</label>
+        <input id="csv" type="file" accept=".csv,text/csv">
+        <button id="reloadDb">Reload from Database</button>
       </div>
-      <div class="filter-grid" style="margin-top:14px">
-        <label class="field">
-          <span>Games to include</span>
-          <select id="playScope">
-            <option value="unplayed" selected>No plays only</option>
-            <option value="all">All owned games</option>
-          </select>
+      <div id="syncStatus" class="status">Loading your collection…</div>
+    </section>
+
+    <section class="card">
+      <h2 style="margin-top:0">Game Night Filters</h2>
+      <div class="grid3">
+        <label class="field"><span>Games to include</span>
+          <select id="scope"><option value="unplayed">No plays only</option><option value="all">All owned games</option></select>
         </label>
-        <label class="field">
-          <span>Player count</span>
-          <input id="playerCount" type="number" min="1" max="99" inputmode="numeric" placeholder="Any" />
-        </label>
-        <label class="field">
-          <span>Maximum play time</span>
-          <select id="maxTime">
-            <option value="" selected>Any length</option>
-            <option value="30">30 minutes</option>
-            <option value="45">45 minutes</option>
-            <option value="60">1 hour</option>
-            <option value="90">1.5 hours</option>
-            <option value="120">2 hours</option>
-            <option value="180">3 hours</option>
-            <option value="240">4 hours</option>
-          </select>
+        <label class="field"><span>Player count</span><input id="players" type="number" min="1" max="99" placeholder="Any"></label>
+        <label class="field"><span>Maximum play time</span>
+          <select id="time"><option value="">Any length</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option></select>
         </label>
       </div>
-      <div class="row" style="margin-top:12px">
-        <label class="check"><input id="excludeExpansions" type="checkbox" checked> Exclude expansions</label>
-        <label class="check"><input id="ownedOnly" type="checkbox" checked> Owned only</label>
-        <button id="clearFiltersBtn" type="button">Clear game-night filters</button>
-      </div>
-      <p id="importMessage" class="small">No collection imported yet.</p>
+      <div class="row" style="margin-top:12px"><button id="clearFilters">Clear Filters</button></div>
       <div class="stats">
-        <div class="stat"><strong id="totalCount">0</strong><span>Eligible</span></div>
-        <div class="stat"><strong id="passedCount">0</strong><span>Passed</span></div>
-        <div class="stat"><strong id="playedCount">0</strong><span>Selected</span></div>
+        <div class="stat"><strong id="eligibleCount">0</strong><span>Eligible</span></div>
+        <div class="stat"><strong id="passCount">0</strong><span>Passed</span></div>
+        <div class="stat"><strong id="playCount">0</strong><span>Selected</span></div>
       </div>
     </section>
 
     <section class="card">
-      <div class="wheel-wrap">
-        <div class="pointer"></div>
-        <canvas id="wheel" width="620" height="620"></canvas>
-      </div>
-      <button id="spinBtn" class="primary" style="width:100%" disabled>SPIN THE WHEEL</button>
+      <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="620" height="620"></canvas></div>
+      <button id="spin" class="primary" style="width:100%" disabled>SPIN THE WHEEL</button>
     </section>
 
-    <section id="resultCard" class="card reveal-card hidden">
-      <div class="hero">
-        <div class="art-placeholder">🎲</div>
-        <img id="gameArt" alt="Selected game box art" />
-      </div>
-      <div class="reveal-body">
-        <h2 id="winner" class="reveal-title"></h2>
-        <div id="gameYear" class="reveal-year"></div>
-        <div class="detail-grid">
-          <div class="detail"><strong id="playersDetail">—</strong><span>Players</span></div>
-          <div class="detail"><strong id="timeDetail">—</strong><span>Play time</span></div>
-          <div class="detail"><strong id="weightDetail">—</strong><span>Weight</span></div>
-          <div class="detail"><strong id="ratingDetail">—</strong><span>BGG rating</span></div>
+    <section id="result" class="card reveal hidden">
+      <div class="hero"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
+      <div class="body">
+        <h2 id="gameName" class="title"></h2><div id="gameYear" class="year"></div>
+        <div class="details">
+          <div class="detail"><strong id="gamePlayers">—</strong><span>Players</span></div>
+          <div class="detail"><strong id="gameTime">—</strong><span>Play time</span></div>
+          <div class="detail"><strong id="gameWeight">—</strong><span>Weight</span></div>
+          <div class="detail"><strong id="gameRating">—</strong><span>BGG rating</span></div>
         </div>
-        <div class="section-title">Your BGG comments</div>
-        <div id="comments" class="comments empty"></div>
-        <div class="external-actions">
-          <a id="bggLink" class="link-button bgg" target="_blank" rel="noopener">View on BGG</a>
-          <a id="dizedLink" class="link-button dized" target="_blank" rel="noopener">Search Dized Tutorial</a>
+        <strong>Your BGG comments</strong>
+        <div id="gameComments" class="comments" style="margin-top:8px"></div>
+        <div class="actions2">
+          <a id="bggLink" class="button" target="_blank" rel="noopener">View on BGG</a>
+          <a id="dizedLink" class="button" target="_blank" rel="noopener">Search Dized Tutorial</a>
         </div>
-        <div class="decision-actions">
-          <button id="playBtn" class="play">Play It</button>
-          <button id="passBtn" class="pass">Pass</button>
-          <button id="spinAgainBtn">Spin Again</button>
+        <div class="actions3">
+          <button id="play" class="play">Play It</button><button id="pass" class="pass">Pass</button><button id="spinAgain">Spin Again</button>
         </div>
       </div>
     </section>
     <div id="confetti" class="confetti hidden"></div>
 
     <section class="card">
-      <div class="row" style="justify-content:space-between">
-        <strong>Session History</strong>
-        <button id="resetBtn" class="danger">Reset Session</button>
-      </div>
-      <div id="history" class="small" style="margin-top:10px">No decisions yet.</div>
+      <div class="row between"><strong>Synced Decision History</strong><button id="reset" class="danger">Reset Decisions</button></div>
+      <div id="history" class="muted" style="margin-top:10px">No decisions yet.</div>
     </section>
-  </main>
+  </section>
+</main>
 
 <script>
-const els = {
-  file: document.getElementById('csvFile'),
-  hosted: document.getElementById('hostedBtn'),
-  reload: document.getElementById('reloadBtn'),
-  excludeExpansions: document.getElementById('excludeExpansions'),
-  ownedOnly: document.getElementById('ownedOnly'),
-  playScope: document.getElementById('playScope'),
-  playerCount: document.getElementById('playerCount'),
-  maxTime: document.getElementById('maxTime'),
-  clearFilters: document.getElementById('clearFiltersBtn'),
-  importMessage: document.getElementById('importMessage'),
-  totalCount: document.getElementById('totalCount'),
-  passedCount: document.getElementById('passedCount'),
-  playedCount: document.getElementById('playedCount'),
-  spin: document.getElementById('spinBtn'),
-  canvas: document.getElementById('wheel'),
-  resultCard: document.getElementById('resultCard'),
-  winner: document.getElementById('winner'),
-  gameYear: document.getElementById('gameYear'),
-  gameArt: document.getElementById('gameArt'),
-  playersDetail: document.getElementById('playersDetail'),
-  timeDetail: document.getElementById('timeDetail'),
-  weightDetail: document.getElementById('weightDetail'),
-  ratingDetail: document.getElementById('ratingDetail'),
-  bggLink: document.getElementById('bggLink'),
-  dizedLink: document.getElementById('dizedLink'),
-  spinAgain: document.getElementById('spinAgainBtn'),
-  confetti: document.getElementById('confetti'),
-  comments: document.getElementById('comments'),
-  play: document.getElementById('playBtn'),
-  pass: document.getElementById('passBtn'),
-  reset: document.getElementById('resetBtn'),
-  history: document.getElementById('history')
+const SUPABASE_URL = "https://yivnzvgexutjacljqijr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_lzEc-Mqaomi1jDtaFLst7Q_PcLvywrt";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+const el = {
+  authCard:$('authCard'), app:$('app'), email:$('email'), password:$('password'), signIn:$('signIn'),
+  signOut:$('signOut'), authStatus:$('authStatus'), accountEmail:$('accountEmail'),
+  csv:$('csv'), reloadDb:$('reloadDb'), syncStatus:$('syncStatus'),
+  scope:$('scope'), players:$('players'), time:$('time'), clearFilters:$('clearFilters'),
+  eligibleCount:$('eligibleCount'), passCount:$('passCount'), playCount:$('playCount'),
+  wheel:$('wheel'), spin:$('spin'), result:$('result'), art:$('art'), gameName:$('gameName'),
+  gameYear:$('gameYear'), gamePlayers:$('gamePlayers'), gameTime:$('gameTime'),
+  gameWeight:$('gameWeight'), gameRating:$('gameRating'), gameComments:$('gameComments'),
+  bggLink:$('bggLink'), dizedLink:$('dizedLink'), play:$('play'), pass:$('pass'),
+  spinAgain:$('spinAgain'), confetti:$('confetti'), history:$('history'), reset:$('reset')
 };
+const ctx = el.wheel.getContext('2d');
+let user=null, games=[], eligible=[], decisions=[], current=null, rotation=0, spinning=false, saveTimer=null;
 
-const ctx = els.canvas.getContext('2d');
-let allGames = [];
-let eligibleGames = [];
-let currentGame = null;
-let rotation = 0;
-let spinning = false;
-let decisions = JSON.parse(localStorage.getItem('bgg-spinner-decisions') || '{}');
+function status(target,msg,type=''){ target.textContent=msg; target.className='status '+type; }
+function num(v){ const n=Number(String(v??'').replace(/,/g,'')); return Number.isFinite(n)?n:null; }
+function bool(v){ return String(v).trim()==='1'||String(v).toLowerCase()==='true'; }
+function esc(s){ return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-function normalizeHeader(h){
-  return String(h || '').trim().toLowerCase().replace(/[^a-z0-9]/g,'');
-}
-function firstValue(row, names){
-  for (const name of names){
-    const key = Object.keys(row).find(k => normalizeHeader(k) === normalizeHeader(name));
-    if (key && row[key] !== undefined) return String(row[key]).trim();
-  }
-  return '';
-}
-function toNumber(v){
-  const n = Number(String(v).replace(/,/g,'').trim());
-  return Number.isFinite(n) ? n : 0;
-}
 function parseCSV(text){
-  const rows=[]; let row=[], field='', quoted=false;
+  const rows=[]; let row=[],field='',quoted=false;
   for(let i=0;i<text.length;i++){
-    const c=text[i], next=text[i+1];
-    if(c === '"'){
-      if(quoted && next === '"'){ field+='"'; i++; }
-      else quoted=!quoted;
-    } else if(c === ',' && !quoted){ row.push(field); field=''; }
-    else if((c === '\n' || c === '\r') && !quoted){
-      if(c === '\r' && next === '\n') i++;
-      row.push(field); field='';
-      if(row.some(v => v !== '')) rows.push(row);
-      row=[];
-    } else field+=c;
+    const c=text[i],n=text[i+1];
+    if(c==='"'){if(quoted&&n==='"'){field+='"';i++;}else quoted=!quoted;}
+    else if(c===','&&!quoted){row.push(field);field='';}
+    else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(field);field='';if(row.some(x=>x!==''))rows.push(row);row=[];}
+    else field+=c;
   }
-  if(field.length || row.length){ row.push(field); rows.push(row); }
-  if(rows.length < 2) return [];
-  const headers=rows[0].map(h=>h.trim());
-  return rows.slice(1).map(values=>{
-    const obj={}; headers.forEach((h,i)=>obj[h]=values[i] ?? ''); return obj;
-  });
+  if(field||row.length){row.push(field);rows.push(row);}
+  if(rows.length<2)return [];
+  const headers=rows[0].map(x=>x.trim().toLowerCase());
+  return rows.slice(1).map(vals=>Object.fromEntries(headers.map((h,i)=>[h,vals[i]??''])));
 }
-function mapGame(row, index){
+
+function csvToGame(r){
+  const minPlay=num(r.minplaytime), maxPlay=num(r.maxplaytime), playing=num(r.playingtime);
   return {
-    id: firstValue(row,['objectid','object id','gameid','game id']) || `row-${index}`,
-    name: firstValue(row,['objectname','name','title','game']),
-    own: toNumber(firstValue(row,['own','owned'])),
-    numplays: toNumber(firstValue(row,['numplays','num plays','plays'])),
-    subtype: firstValue(row,['itemtype','subtype','type']).toLowerCase(),
-    comment: [firstValue(row,['comment','comments','usercomment','user comment','notes']), firstValue(row,['privatecomment','private comment'])].filter(Boolean).join('\n\n'),
-    year: firstValue(row,['yearpublished','year published','year']),
-    minplayers: toNumber(firstValue(row,['minplayers','min players'])),
-    maxplayers: toNumber(firstValue(row,['maxplayers','max players'])),
-    playingtime: toNumber(firstValue(row,['playingtime','playing time','playtime'])),
-    minplaytime: toNumber(firstValue(row,['minplaytime','min play time'])),
-    maxplaytime: toNumber(firstValue(row,['maxplaytime','max play time'])),
-    weight: firstValue(row,['avgweight','weight','average weight']),
-    rating: firstValue(row,['average','baverage','rating','bgg rating']),
-    imageid: firstValue(row,['imageid','image id']),
-    raw: row
+    user_id:user.id, bgg_id:num(r.objectid), name:r.objectname||r.name||'',
+    year_published:num(r.yearpublished), owned:bool(r.own), num_plays:num(r.numplays)||0,
+    item_type:r.itemtype||r.objecttype||'', min_players:num(r.minplayers), max_players:num(r.maxplayers),
+    min_play_time:minPlay, max_play_time:maxPlay??playing, average_rating:num(r.average)||num(r.baverage),
+    weight:num(r.avgweight)||num(r.weight), comment:r.comment||'', private_comment:r.privatecomment||'',
+    image_url:null, thumbnail_url:null, updated_at:new Date().toISOString()
   };
 }
+
+async function signIn(){
+  status(el.authStatus,'Signing in…');
+  const {data,error}=await sb.auth.signInWithPassword({email:el.email.value.trim(),password:el.password.value});
+  if(error) return status(el.authStatus,error.message,'error');
+  await enterApp(data.user);
+}
+async function enterApp(u){
+  user=u; el.authCard.classList.add('hidden'); el.app.classList.remove('hidden'); el.accountEmail.textContent=u.email||'Signed in';
+  await Promise.all([loadGames(),loadDecisions(),loadSettings()]);
+  applyFilters();
+}
+async function loadGames(){
+  status(el.syncStatus,'Loading your collection from Supabase…');
+  const {data,error}=await sb.from('games').select('*').order('name');
+  if(error){status(el.syncStatus,'Database error: '+error.message,'error');return;}
+  games=data||[]; status(el.syncStatus,`Loaded ${games.length} games from the database.`,'ok'); applyFilters();
+}
+async function loadDecisions(){
+  const {data,error}=await sb.from('game_decisions').select('id,game_id,decision,created_at').order('created_at',{ascending:false});
+  if(error){status(el.syncStatus,'Decision sync error: '+error.message,'error');return;}
+  decisions=data||[]; renderHistory();
+}
+async function loadSettings(){
+  const {data}=await sb.from('user_settings').select('*').maybeSingle();
+  if(data){el.scope.value=data.game_scope||'unplayed';el.players.value=data.player_count||'';el.time.value=data.available_minutes||'';}
+}
+async function saveSettings(){
+  if(!user)return;
+  await sb.from('user_settings').upsert({
+    user_id:user.id,game_scope:el.scope.value,player_count:num(el.players.value),
+    available_minutes:num(el.time.value),exclude_expansions:true,updated_at:new Date().toISOString()
+  },{onConflict:'user_id'});
+}
+function queueSettings(){clearTimeout(saveTimer);saveTimer=setTimeout(saveSettings,450);applyFilters();}
+
+async function importCSV(file){
+  if(!file)return;
+  status(el.syncStatus,'Reading BGG CSV…');
+  const rows=parseCSV(await file.text());
+  const mapped=rows.map(csvToGame).filter(g=>g.bgg_id&&g.name);
+  if(!mapped.length)return status(el.syncStatus,'No recognizable BGG games were found in that CSV.','error');
+  status(el.syncStatus,`Uploading ${mapped.length} games…`);
+  let done=0;
+  for(let i=0;i<mapped.length;i+=100){
+    const chunk=mapped.slice(i,i+100);
+    const {error}=await sb.from('games').upsert(chunk,{onConflict:'user_id,bgg_id'});
+    if(error)return status(el.syncStatus,`Upload stopped after ${done} games: ${error.message}`,'error');
+    done+=chunk.length; status(el.syncStatus,`Uploaded ${done} of ${mapped.length} games…`);
+  }
+  status(el.syncStatus,`Import complete: ${mapped.length} games updated.`,'ok');
+  await loadGames();
+}
+
+function latestDecisionMap(){
+  const m=new Map();
+  for(const d of decisions)if(!m.has(d.game_id))m.set(d.game_id,d);
+  return m;
+}
 function applyFilters(){
-  eligibleGames = allGames.filter(g => {
-    if(!g.name) return false;
-    if(els.ownedOnly.checked && g.own !== 1) return false;
-    if(els.playScope.value === 'unplayed' && g.numplays !== 0) return false;
-    if(els.excludeExpansions.checked && (g.subtype.includes('expansion') || (g.subtype && g.subtype !== 'standalone'))) return false;
-
-    const requestedPlayers = toNumber(els.playerCount.value);
-    if(requestedPlayers > 0){
-      if(g.minplayers <= 0 || g.maxplayers <= 0) return false;
-      if(requestedPlayers < g.minplayers || requestedPlayers > g.maxplayers) return false;
-    }
-
-    const maximumMinutes = toNumber(els.maxTime.value);
-    if(maximumMinutes > 0){
-      if(g.playingtime <= 0 || g.playingtime > maximumMinutes) return false;
-    }
-
-    if(decisions[g.id]) return false;
+  const player=num(el.players.value),maxT=num(el.time.value),dmap=latestDecisionMap();
+  eligible=games.filter(g=>{
+    if(!g.owned)return false;
+    if(String(g.item_type).toLowerCase().includes('expansion'))return false;
+    if(el.scope.value==='unplayed'&&Number(g.num_plays)!==0)return false;
+    if(player!==null&&(!(g.min_players<=player)||!(g.max_players>=player)))return false;
+    if(maxT!==null&&(!(g.max_play_time>0)||g.max_play_time>maxT))return false;
+    if(dmap.has(g.id))return false;
     return true;
   });
-  currentGame=null;
-  els.resultCard.classList.add('hidden');
-  els.spin.disabled = eligibleGames.length === 0;
-  updateStats();
-  drawWheel();
+  el.eligibleCount.textContent=eligible.length;
+  const vals=[...latestDecisionMap().values()];
+  el.passCount.textContent=vals.filter(x=>x.decision==='pass').length;
+  el.playCount.textContent=vals.filter(x=>x.decision==='play').length;
+  el.spin.disabled=!eligible.length||spinning; drawWheel(); renderHistory();
 }
-function updateStats(){
-  const values = Object.values(decisions);
-  els.totalCount.textContent = eligibleGames.length;
-  els.passedCount.textContent = values.filter(v=>v.status==='passed').length;
-  els.playedCount.textContent = values.filter(v=>v.status==='played').length;
-  renderHistory();
-}
-function colorFor(i,total){
-  const hue = Math.round((i * 360 / Math.max(total,1)) % 360);
-  return `hsl(${hue} 65% 48%)`;
-}
+function color(i,n){return `hsl(${Math.round(i*360/Math.max(n,1))} 65% 48%)`;}
 function drawWheel(){
-  const w=els.canvas.width,h=els.canvas.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-18;
+  const w=el.wheel.width,h=el.wheel.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-18;
   ctx.clearRect(0,0,w,h);
-  if(!eligibleGames.length){
-    ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#cbd5e1';ctx.font='700 28px -apple-system, sans-serif';ctx.textAlign='center';
-    ctx.fillText(allGames.length ? 'No games match filters' : 'Import your BGG CSV',cx,cy);
-    return;
-  }
-  const shown = eligibleGames.slice(0,80);
-  const arc=Math.PI*2/shown.length;
-  shown.forEach((g,i)=>{
-    const start=rotation+i*arc,end=start+arc;
-    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
-    ctx.fillStyle=colorFor(i,shown.length);ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.25)';ctx.stroke();
-    ctx.save();ctx.translate(cx,cy);ctx.rotate(start+arc/2);
-    ctx.textAlign='right';ctx.fillStyle='#fff';
-    const fs = shown.length > 40 ? 11 : shown.length > 20 ? 14 : 18;
-    ctx.font=`700 ${fs}px -apple-system, sans-serif`;
-    const maxChars = shown.length > 40 ? 18 : shown.length > 20 ? 24 : 32;
-    const label=g.name.length>maxChars?g.name.slice(0,maxChars-1)+'…':g.name;
-    ctx.fillText(label,r-18,fs/3);ctx.restore();
-  });
-  ctx.beginPath();ctx.arc(cx,cy,42,0,Math.PI*2);ctx.fillStyle='#111827';ctx.fill();
-  ctx.strokeStyle='#f8fafc';ctx.lineWidth=4;ctx.stroke();
+  if(!eligible.length){ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cbd5e1';ctx.font='700 26px sans-serif';ctx.textAlign='center';ctx.fillText(games.length?'No games match':'Import your collection',cx,cy);return;}
+  const shown=eligible.slice(0,80),arc=Math.PI*2/shown.length;
+  shown.forEach((g,i)=>{const s=rotation+i*arc;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,s+arc);ctx.closePath();ctx.fillStyle=color(i,shown.length);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.25)';ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font=`700 ${shown.length>40?11:shown.length>20?14:18}px sans-serif`;let t=g.name;t=t.length>28?t.slice(0,27)+'…':t;ctx.fillText(t,r-17,5);ctx.restore();});
+  ctx.beginPath();ctx.arc(cx,cy,42,0,Math.PI*2);ctx.fillStyle='#111827';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();
 }
-function spinWheel(){
-  if(spinning || !eligibleGames.length) return;
-  spinning=true;els.spin.disabled=true;
-  const chosenIndex=Math.floor(Math.random()*eligibleGames.length);
-  const shown=eligibleGames.slice(0,80);
-  const displayIndex=Math.min(chosenIndex,shown.length-1);
-  const arc=Math.PI*2/shown.length;
-  const pointerAngle=-Math.PI/2;
-  const target=pointerAngle-(displayIndex+.5)*arc;
-  const extraTurns=(5+Math.random()*3)*Math.PI*2;
-  const start=rotation;
-  const end=target+extraTurns;
-  const duration=3200;
-  const t0=performance.now();
-  function animate(now){
-    const p=Math.min((now-t0)/duration,1);
-    const eased=1-Math.pow(1-p,4);
-    rotation=start+(end-start)*eased;
-    drawWheel();
-    if(p<1) requestAnimationFrame(animate);
-    else{
-      rotation=((rotation%(Math.PI*2))+Math.PI*2)%(Math.PI*2);
-      currentGame=eligibleGames[chosenIndex];
-      showResult(currentGame);
-      spinning=false;els.spin.disabled=false;
-    }
-  }
-  requestAnimationFrame(animate);
+function spin(){
+  if(spinning||!eligible.length)return; spinning=true;el.spin.disabled=true;el.result.classList.add('hidden');
+  const idx=Math.floor(Math.random()*eligible.length),shown=eligible.slice(0,80),di=Math.min(idx,shown.length-1),arc=Math.PI*2/shown.length;
+  const start=rotation,end=(-Math.PI/2-(di+.5)*arc)+(5+Math.random()*3)*Math.PI*2,t0=performance.now();
+  const frame=now=>{const p=Math.min((now-t0)/3200,1),e=1-Math.pow(1-p,4);rotation=start+(end-start)*e;drawWheel();if(p<1)requestAnimationFrame(frame);else{rotation=((rotation%(Math.PI*2))+Math.PI*2)%(Math.PI*2);current=eligible[idx];showGame(current);spinning=false;el.spin.disabled=false;}};
+  requestAnimationFrame(frame);
 }
-function formatNumber(value, digits=1){
-  const n=Number(value);
-  return Number.isFinite(n) && n>0 ? n.toFixed(digits) : '—';
+function showGame(g){
+  el.gameName.textContent=g.name;el.gameYear.textContent=g.year_published||'';
+  el.gamePlayers.textContent=(g.min_players||g.max_players)?`${g.min_players||'?'}–${g.max_players||'?'}`:'—';
+  const min=g.min_play_time,max=g.max_play_time;el.gameTime.textContent=max?(min&&min!==max?`${min}–${max} min`:`${max} min`):'—';
+  el.gameWeight.textContent=g.weight?Number(g.weight).toFixed(1):'—';el.gameRating.textContent=g.average_rating?Number(g.average_rating).toFixed(1):'—';
+  el.gameComments.textContent=g.comment||'No BGG comment saved for this game.';
+  el.bggLink.href=`https://boardgamegeek.com/boardgame/${g.bgg_id}`;
+  el.dizedLink.href=`https://www.google.com/search?q=${encodeURIComponent('site:dized.com '+g.name+' tutorial')}`;
+  el.art.style.display='none'; el.art.removeAttribute('src');
+  if(g.image_url){el.art.src=g.image_url;el.art.style.display='block';}
+  else tryArtwork(g);
+  el.result.classList.remove('hidden');confetti();el.result.scrollIntoView({behavior:'smooth',block:'start'});
 }
-function launchConfetti(){
-  els.confetti.innerHTML='';
-  els.confetti.classList.remove('hidden');
-  const colors=['#f59e0b','#22c55e','#7c3aed','#38bdf8','#f43f5e','#f8fafc'];
-  for(let i=0;i<70;i++){
-    const piece=document.createElement('div');
-    piece.className='confetti-piece';
-    piece.style.left=`${Math.random()*100}%`;
-    piece.style.background=colors[i%colors.length];
-    piece.style.setProperty('--drift',`${(Math.random()-.5)*240}px`);
-    piece.style.animationDelay=`${Math.random()*.45}s`;
-    piece.style.transform=`rotate(${Math.random()*360}deg)`;
-    els.confetti.appendChild(piece);
-  }
-  setTimeout(()=>els.confetti.classList.add('hidden'),2400);
+async function tryArtwork(g){
+  try{
+    const res=await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${g.bgg_id}`);
+    if(!res.ok)return;const txt=await res.text();const m=txt.match(/<image>(.*?)<\/image>/);
+    if(!m)return;const url=m[1].replaceAll('&amp;','&');
+    el.art.src=url;el.art.style.display='block';
+    await sb.from('games').update({image_url:url,updated_at:new Date().toISOString()}).eq('id',g.id);
+    g.image_url=url;
+  }catch{}
 }
-function showResult(g){
-  els.winner.textContent=g.name;
-  els.gameYear.textContent=g.year ? `Published ${g.year}` : '';
-  els.playersDetail.textContent=(g.minplayers||g.maxplayers) ? `${g.minplayers||'?'}–${g.maxplayers||'?'}` : '—';
-  const minTime=g.minplaytime||g.playingtime;
-  const maxTime=g.maxplaytime||g.playingtime;
-  els.timeDetail.textContent=minTime ? (maxTime && maxTime!==minTime ? `${minTime}–${maxTime} min` : `${minTime} min`) : '—';
-  els.weightDetail.textContent=formatNumber(g.weight,1);
-  els.ratingDetail.textContent=formatNumber(g.rating,1);
-  els.comments.textContent=g.comment || 'No BGG comments were included for this game.';
-  els.comments.classList.toggle('empty',!g.comment);
-  els.bggLink.href=`https://boardgamegeek.com/boardgame/${encodeURIComponent(g.id)}`;
-  els.dizedLink.href=`https://dized.com/search/?q=${encodeURIComponent(g.name)}`;
-  els.gameArt.classList.remove('failed');
-  els.gameArt.alt=`${g.name} box art`;
-  if(g.imageid){
-    els.gameArt.src=`https://cf.geekdo-static.com/images/pic${encodeURIComponent(g.imageid)}.jpg`;
-  }else{
-    els.gameArt.removeAttribute('src');
-    els.gameArt.classList.add('failed');
-  }
-  els.gameArt.onerror=()=>els.gameArt.classList.add('failed');
-  els.resultCard.classList.remove('hidden');
-  launchConfetti();
-  els.resultCard.scrollIntoView({behavior:'smooth',block:'start'});
+function confetti(){
+  el.confetti.innerHTML='';el.confetti.classList.remove('hidden');
+  const colors=['#f43f5e','#f59e0b','#22c55e','#38bdf8','#a78bfa','#f8fafc'];
+  for(let i=0;i<70;i++){const p=document.createElement('i');p.className='piece';p.style.left=Math.random()*100+'vw';p.style.background=colors[i%colors.length];p.style.setProperty('--drift',(Math.random()*240-120)+'px');p.style.animationDelay=Math.random()*.35+'s';el.confetti.appendChild(p);}
+  setTimeout(()=>el.confetti.classList.add('hidden'),2400);
 }
-function decide(status){
-  if(!currentGame) return;
-  decisions[currentGame.id]={status,name:currentGame.name,at:new Date().toISOString()};
-  localStorage.setItem('bgg-spinner-decisions',JSON.stringify(decisions));
-  applyFilters();
+async function decide(decision){
+  if(!current)return;
+  const {error}=await sb.from('game_decisions').insert({user_id:user.id,game_id:current.id,decision,player_count:num(el.players.value),available_minutes:num(el.time.value)});
+  if(error)return status(el.syncStatus,'Could not save decision: '+error.message,'error');
+  await loadDecisions(); current=null;el.result.classList.add('hidden');applyFilters();
 }
 function renderHistory(){
-  const items=Object.values(decisions).sort((a,b)=>b.at.localeCompare(a.at));
-  if(!items.length){els.history.textContent='No decisions yet.';return;}
-  els.history.innerHTML=items.map(i=>`
-    <div class="history-item">
-      <span>${escapeHtml(i.name)}</span>
-      <span class="badge ${i.status}">${i.status==='played'?'PLAY':'PASS'}</span>
-    </div>`).join('');
+  const dmap=[...latestDecisionMap().values()];
+  if(!dmap.length){el.history.textContent='No decisions yet.';return;}
+  const byId=new Map(games.map(g=>[g.id,g.name]));
+  el.history.innerHTML=dmap.slice(0,50).map(d=>`<div class="history-item"><span>${esc(byId.get(d.game_id)||'Game')}</span><span class="badge ${d.decision}">${d.decision.toUpperCase()}</span></div>`).join('');
 }
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+async function resetDecisions(){
+  if(!confirm('Clear all synced Play/Pass decisions?'))return;
+  const {error}=await sb.from('game_decisions').delete().eq('user_id',user.id);
+  if(error)return status(el.syncStatus,error.message,'error');
+  decisions=[];applyFilters();
 }
-function loadText(text, remember=true, sourceLabel='collection'){
-  const rows=parseCSV(text);
-  allGames=rows.map(mapGame).filter(g=>g.name);
-  if(remember){
-    try{localStorage.setItem('bgg-spinner-last-csv',text)}catch(e){}
-  }
-  els.importMessage.textContent=`Loaded ${allGames.length} rows from ${sourceLabel}.`;
-  applyFilters();
-}
-els.file.addEventListener('change',async e=>{
-  const file=e.target.files[0]; if(!file) return;
-  loadText(await file.text(),true,'your uploaded CSV');
-});
-async function loadHostedCollection(){
-  els.importMessage.textContent='Loading the hosted collection…';
-  try{
-    const response=await fetch('./collection.csv',{cache:'no-store'});
-    if(!response.ok) throw new Error(`HTTP ${response.status}`);
-    loadText(await response.text(),false,'the hosted collection');
-  }catch(error){
-    els.importMessage.textContent='Could not load collection.csv from the hosted site. You can still import a CSV manually.';
-  }
-}
-els.hosted.addEventListener('click',loadHostedCollection);
-els.reload.addEventListener('click',()=>{
-  const text=localStorage.getItem('bgg-spinner-last-csv');
-  if(text) loadText(text,false,'this device’s saved CSV');
-  else els.importMessage.textContent='No saved import was found on this device.';
-});
-[els.excludeExpansions,els.ownedOnly,els.playScope,els.maxTime].forEach(el=>el.addEventListener('change',applyFilters));
-els.playerCount.addEventListener('input',applyFilters);
-els.clearFilters.addEventListener('click',()=>{
-  els.playScope.value='unplayed';
-  els.playerCount.value='';
-  els.maxTime.value='';
-  applyFilters();
-});
-els.spin.addEventListener('click',spinWheel);
-els.play.addEventListener('click',()=>decide('played'));
-els.pass.addEventListener('click',()=>decide('passed'));
-els.spinAgain.addEventListener('click',()=>{ els.resultCard.classList.add('hidden'); spinWheel(); });
-els.reset.addEventListener('click',()=>{
-  decisions={};localStorage.removeItem('bgg-spinner-decisions');applyFilters();
-});
-drawWheel();updateStats();
-loadHostedCollection();
 
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=5').catch(()=>{}));
-}
+el.signIn.onclick=signIn;el.password.addEventListener('keydown',e=>{if(e.key==='Enter')signIn();});
+el.signOut.onclick=async()=>{await sb.auth.signOut();location.reload();};
+el.csv.onchange=e=>importCSV(e.target.files[0]);el.reloadDb.onclick=async()=>{await Promise.all([loadGames(),loadDecisions()]);applyFilters();};
+[el.scope,el.players,el.time].forEach(x=>x.addEventListener('input',queueSettings));
+el.clearFilters.onclick=()=>{el.scope.value='unplayed';el.players.value='';el.time.value='';queueSettings();};
+el.spin.onclick=spin;el.spinAgain.onclick=()=>{el.result.classList.add('hidden');spin();};
+el.play.onclick=()=>decide('play');el.pass.onclick=()=>decide('pass');el.reset.onclick=resetDecisions;
+el.art.onerror=()=>{el.art.style.display='none';};
+sb.auth.getSession().then(({data})=>{if(data.session)enterApp(data.session.user);});
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+drawWheel();
 </script>
 </body>
 </html>
