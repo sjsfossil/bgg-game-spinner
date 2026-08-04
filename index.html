@@ -1,455 +1,152 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#0b1020">
-  <title>The Howling Meeple Companion</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root{
-      color-scheme:dark;
-      --bg:#08101f;--panel:#131d32;--panel2:#1a2742;--line:#2d3c5f;
-      --text:#f8fafc;--muted:#9fb0cc;--accent:#7c3aed;--accent2:#8b5cf6;
-      --green:#22c55e;--amber:#f59e0b;--red:#ef4444;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:
-      radial-gradient(circle at top right,rgba(124,58,237,.16),transparent 28rem),
-      linear-gradient(180deg,#08101f,#0d1424 48%,#10182a);
-      color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
-    .shell{max-width:860px;margin:auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom))}
-    .brand{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
-    .brand-icon{width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#312e81);display:grid;place-items:center;font-size:1.75rem;box-shadow:0 12px 32px rgba(124,58,237,.32)}
-    h1{font-size:1.75rem;margin:0} h2{margin:0 0 12px} p{margin:0}
-    .muted{color:var(--muted)} .small{font-size:.86rem}
-    .card{background:rgba(19,29,50,.96);border:1px solid var(--line);border-radius:20px;padding:16px;margin:14px 0;box-shadow:0 16px 38px rgba(0,0,0,.23)}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .between{justify-content:space-between}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    button,.button,label.file-label{appearance:none;border:1px solid var(--line);border-radius:14px;padding:12px 15px;background:var(--panel2);color:var(--text);font-weight:800;font-size:1rem;cursor:pointer;text-decoration:none;text-align:center}
-    button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
-    button.play{background:var(--green);color:#061109;border-color:transparent}
-    button.pass{background:#374151} button.danger{background:#7f1d1d}
-    button:disabled{opacity:.48;cursor:not-allowed}
-    input,select{width:100%;background:#0d1728;color:var(--text);border:1px solid var(--line);border-radius:13px;padding:12px;font-size:1rem}
-    input[type=file]{display:none}
-    .field{display:flex;flex-direction:column;gap:7px} .field span{font-size:.84rem;color:var(--muted);font-weight:750}
-    .hidden{display:none!important}
-    .status{margin-top:10px;color:var(--muted);white-space:pre-wrap} .status.ok{color:#86efac} .status.error{color:#fca5a5}
-    .pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 10px;background:#0d1728;border:1px solid var(--line);font-size:.78rem;font-weight:800}
-    .dot{width:8px;height:8px;border-radius:50%;background:var(--amber)} .dot.green{background:var(--green)} .dot.red{background:var(--red)}
-    .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    .stat{background:#0d1728;border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center}
-    .stat strong{display:block;font-size:1.45rem} .stat span{font-size:.76rem;color:var(--muted)}
-    .wheel-card{text-align:center;padding:18px}
-    .wheel-wrap{position:relative;display:grid;place-items:center;max-width:530px;margin:8px auto 18px}
-    canvas{width:100%;height:auto;filter:drop-shadow(0 16px 30px rgba(0,0,0,.35))}
-    .pointer{position:absolute;top:1px;border-left:18px solid transparent;border-right:18px solid transparent;border-top:34px solid #fff;z-index:2;filter:drop-shadow(0 5px 5px rgba(0,0,0,.38))}
-    .spin-button{width:100%;padding:16px;font-size:1.13rem;letter-spacing:.035em}
-    .reveal{padding:0;overflow:hidden;background:linear-gradient(180deg,#17233c,#111827)}
-    .art-wrap{position:relative;min-height:340px;background:radial-gradient(circle,#263453,#0d1728);display:grid;place-items:center;overflow:hidden}
-    .art-wrap img{width:100%;height:400px;object-fit:contain;padding:20px;z-index:1}
-    .placeholder{position:absolute;font-size:6rem;opacity:.55}
-    .reveal-body{padding:20px}
-    .game-title{font-size:2rem;line-height:1.08;text-align:center;margin:0} .game-year{text-align:center;color:var(--muted);margin-top:6px}
-    .details{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:17px 0}
-    .detail{background:#0d1728;border:1px solid var(--line);border-radius:15px;padding:12px 6px;text-align:center}
-    .detail strong{display:block;font-size:1.06rem} .detail span{font-size:.74rem;color:var(--muted)}
-    .comments{margin-top:8px;background:#0d1728;border:1px solid var(--line);border-radius:15px;padding:14px;white-space:pre-wrap;line-height:1.45}
-    .actions2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
-    .actions3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
-    .history-item{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
-    .badge{font-size:.73rem;padding:4px 8px;border-radius:999px;background:#334155;font-weight:850} .badge.play{background:#14532d}
-    .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999}
-    .piece{position:absolute;top:-30px;width:10px;height:18px;border-radius:2px;animation:fall 2s linear forwards}
-    @keyframes fall{to{transform:translate3d(var(--drift),110vh,0) rotate(760deg);opacity:.1}}
-    .section-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-    .auth{max-width:560px;margin:28px auto}
-
-    .wheel-card{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(139,92,246,.18),transparent 24rem),linear-gradient(180deg,rgba(22,32,56,.98),rgba(13,20,36,.98))}
-    .wheel-card::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 18%,rgba(124,58,237,.08) 22%,transparent 28% 48%,rgba(56,189,248,.06) 54%,transparent 60% 100%);animation:ambientSpin 18s linear infinite;pointer-events:none}
-    @keyframes ambientSpin{to{transform:rotate(360deg)}}
-    .wheel-stage{position:relative;z-index:1;max-width:560px;margin:0 auto 16px;padding:18px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.04),transparent 62%),linear-gradient(145deg,#1f2b49,#0b1220);box-shadow:inset 0 0 0 2px rgba(255,255,255,.06),inset 0 0 45px rgba(124,58,237,.15),0 0 0 10px rgba(10,16,31,.7),0 24px 50px rgba(0,0,0,.42)}
-    .wheel-stage::after{content:"";position:absolute;inset:6px;border-radius:50%;border:2px solid rgba(167,139,250,.26);box-shadow:0 0 28px rgba(124,58,237,.28),inset 0 0 18px rgba(124,58,237,.16);pointer-events:none}
-    .wheel-wrap{margin:0}
-    .pointer{top:-8px;border-left-width:22px;border-right-width:22px;border-top-width:42px;border-top-color:#f8fafc;filter:drop-shadow(0 0 9px rgba(255,255,255,.7)) drop-shadow(0 5px 6px rgba(0,0,0,.55))}
-    .spin-caption{position:relative;z-index:1;margin:4px 0 14px;color:var(--muted);font-size:.9rem}
-    .spin-button{position:relative;z-index:1;overflow:hidden;box-shadow:0 12px 28px rgba(124,58,237,.28)}
-    .spin-button::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 0 38%,rgba(255,255,255,.18) 48%,transparent 58% 100%);transform:translateX(-130%);animation:buttonShine 3.8s ease-in-out infinite}
-    @keyframes buttonShine{0%,55%{transform:translateX(-130%)}78%,100%{transform:translateX(130%)}}
-    .wheel-status{position:relative;z-index:1;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 12px}
-    .wheel-chip{border:1px solid rgba(167,139,250,.28);background:rgba(13,23,40,.72);color:#d8dff0;border-radius:999px;padding:6px 10px;font-size:.76rem;font-weight:800}
-    .reveal-flash{animation:revealPulse .75s ease-out}
-    @keyframes revealPulse{0%{transform:scale(.97);filter:brightness(1.6)}55%{transform:scale(1.015)}100%{transform:scale(1);filter:brightness(1)}}
-
-    @media(max-width:680px){
-      .grid2,.grid3{grid-template-columns:1fr}
-      .hero-stats{grid-template-columns:1fr 1fr}
-      .details{grid-template-columns:1fr 1fr}
-      .actions2,.actions3{grid-template-columns:1fr}
-      button,.button,label.file-label{width:100%}
-      .brand{align-items:flex-start}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>The Howling Meeple Companion</title>
+<link rel="manifest" href="manifest.webmanifest">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#08101f;--panel:#131d32;--panel2:#1a2742;--line:#2d3c5f;--text:#f8fafc;--muted:#9fb0cc;--accent:#7c3aed;--accent2:#8b5cf6;--green:#22c55e;--amber:#f59e0b;--red:#ef4444}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top right,rgba(124,58,237,.16),transparent 28rem),linear-gradient(180deg,#08101f,#0d1424 48%,#10182a);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;min-height:100vh}
+.shell{max-width:980px;margin:auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:center;gap:12px;margin:6px 0 14px} .brand-icon{width:50px;height:50px;border-radius:16px;background:linear-gradient(135deg,var(--accent),#312e81);display:grid;place-items:center;font-size:1.75rem;box-shadow:0 12px 32px rgba(124,58,237,.32)} h1{font-size:1.75rem;margin:0} h2,h3{margin:0 0 12px} p{margin:0} .muted{color:var(--muted)} .small{font-size:.86rem}
+.card{background:rgba(19,29,50,.96);border:1px solid var(--line);border-radius:20px;padding:16px;margin:14px 0;box-shadow:0 16px 38px rgba(0,0,0,.23)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px} .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px} .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+button,.button,label.file-label{appearance:none;border:1px solid var(--line);border-radius:14px;padding:12px 15px;background:var(--panel2);color:var(--text);font-weight:800;font-size:1rem;cursor:pointer;text-decoration:none;text-align:center} button.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent} button.play{background:var(--green);color:#061109;border-color:transparent} button.pass{background:#374151} button.danger{background:#7f1d1d} button:disabled{opacity:.48;cursor:not-allowed}
+input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px solid var(--line);border-radius:13px;padding:12px;font-size:1rem} textarea{min-height:90px;resize:vertical} input[type=file]{display:none}
+.field{display:flex;flex-direction:column;gap:7px} .field span{font-size:.84rem;color:var(--muted);font-weight:750} .hidden{display:none!important}
+.status{margin-top:10px;color:var(--muted);white-space:pre-wrap} .status.ok{color:#86efac} .status.error{color:#fca5a5}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;position:sticky;top:0;z-index:20;background:rgba(8,16,31,.92);backdrop-filter:blur(12px);padding-top:8px} .tab{white-space:nowrap;padding:10px 13px} .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent}
+.stat{background:#0d1728;border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center} .stat strong{display:block;font-size:1.4rem} .stat span{font-size:.75rem;color:var(--muted)}
+.pill,.tag{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 10px;background:#0d1728;border:1px solid var(--line);font-size:.78rem;font-weight:800} .tag.active{background:#4c1d95;border-color:#8b5cf6} .tag-grid{display:flex;flex-wrap:wrap;gap:8px}
+.health-bar{height:12px;background:#0d1728;border:1px solid var(--line);border-radius:999px;overflow:hidden} .health-fill{height:100%;background:linear-gradient(90deg,#22c55e,#8b5cf6);width:0}
+.wheel-card{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 20%,rgba(139,92,246,.18),transparent 24rem),linear-gradient(180deg,rgba(22,32,56,.98),rgba(13,20,36,.98));text-align:center}
+.wheel-stage{position:relative;z-index:1;max-width:560px;margin:0 auto 16px;padding:18px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.04),transparent 62%),linear-gradient(145deg,#1f2b49,#0b1220);box-shadow:inset 0 0 0 2px rgba(255,255,255,.06),inset 0 0 45px rgba(124,58,237,.15),0 0 0 10px rgba(10,16,31,.7),0 24px 50px rgba(0,0,0,.42)} .wheel-wrap{position:relative;display:grid;place-items:center} canvas{width:100%;height:auto} .pointer{position:absolute;top:-8px;border-left:22px solid transparent;border-right:22px solid transparent;border-top:42px solid #fff;z-index:2;filter:drop-shadow(0 0 9px rgba(255,255,255,.7))}
+.reveal{padding:0;overflow:hidden} .art-wrap{position:relative;min-height:300px;background:radial-gradient(circle,#263453,#0d1728);display:grid;place-items:center} .art-wrap img{width:100%;height:380px;object-fit:contain;padding:20px;z-index:1} .placeholder{position:absolute;font-size:6rem;opacity:.45} .reveal-body{padding:20px} .game-title{font-size:2rem;text-align:center;margin:0} .game-year{text-align:center;color:var(--muted);margin-top:5px}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0} .detail{background:#0d1728;border:1px solid var(--line);border-radius:15px;padding:11px;text-align:center} .detail strong{display:block} .detail span{font-size:.74rem;color:var(--muted)}
+.queue-item,.history-item,.game-row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);align-items:center} .badge{font-size:.73rem;padding:4px 8px;border-radius:999px;background:#334155;font-weight:850} .badge.play{background:#14532d}
+.score{font-size:2.4rem;font-weight:900;color:#c4b5fd} .reason{padding:7px 0;border-bottom:1px solid var(--line)} .positive{color:#86efac} .negative{color:#fca5a5}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999} .piece{position:absolute;top:-30px;width:10px;height:18px;border-radius:2px;animation:fall 2s linear forwards} @keyframes fall{to{transform:translate3d(var(--drift),110vh,0) rotate(760deg);opacity:.1}}
+@media(max-width:720px){.grid2,.grid3,.grid4{grid-template-columns:1fr} .detail-grid{grid-template-columns:1fr 1fr} button,.button,label.file-label{width:100%}}
+</style>
 </head>
 <body>
 <main class="shell">
-  <header class="brand">
-    <div class="brand-icon">🐺</div>
-    <div>
-      <h1>The Howling Meeple Companion</h1>
-      <p class="muted">A shared game-night collection for your household.</p>
-    </div>
-  </header>
+<header class="brand"><div class="brand-icon">🐺</div><div><h1>The Howling Meeple Companion</h1><p class="muted">Shared game-night planning for your household.</p></div></header>
 
-  <section id="authCard" class="card auth">
-    <h2>Sign in</h2>
-    <div class="grid2">
-      <label class="field"><span>Email</span><input id="email" type="email" autocomplete="email"></label>
-      <label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password"></label>
-    </div>
-    <button id="signIn" class="primary" style="width:100%;margin-top:12px">Sign In</button>
-    <div id="authStatus" class="status">Use the account created in Supabase Authentication.</div>
-  </section>
+<section id="authCard" class="card"><h2>Sign in</h2><div class="grid2"><label class="field"><span>Email</span><input id="email" type="email"></label><label class="field"><span>Password</span><input id="password" type="password"></label></div><button id="signIn" class="primary" style="width:100%;margin-top:12px">Sign In</button><div id="authStatus" class="status"></div></section>
 
-  <section id="app" class="hidden">
-    <section class="card">
-      <div class="row between">
-        <div>
-          <strong id="accountEmail"></strong>
-          <div class="small muted">Supabase connected</div>
-        </div>
-        <button id="signOut">Sign Out</button>
-      </div>
-    </section>
+<section id="app" class="hidden">
+<div class="tabs">
+<button class="tab active" data-tab="tonight">Tonight</button>
+<button class="tab" data-tab="queue">Queue</button>
+<button class="tab" data-tab="collection">Collection</button>
+<button class="tab" data-tab="health">Collection Health</button>
+<button class="tab" data-tab="history">History</button>
+<button class="tab" data-tab="settings">Settings</button>
+</div>
 
-    <section class="card">
-      <div class="section-title">
-        <h2>Collection</h2>
-        <span id="syncPill" class="pill"><i class="dot"></i><span>BGG approval pending</span></span>
-      </div>
+<section id="tab-tonight" class="tab-panel">
+<div class="card">
+<div class="row between"><div><strong id="accountEmail"></strong><div class="small muted">Shared household connected</div></div><button id="signOut">Sign Out</button></div>
+</div>
+<div class="card">
+<h2>Tonight's filters</h2>
+<div class="grid4">
+<label class="field"><span>Selection mode</span><select id="mode"><option value="random">Pure Random</option><option value="recommended">Howl Score</option><option value="highest">Highest Rated</option><option value="overdue">Most Overdue</option></select></label>
+<label class="field"><span>Games</span><select id="scope"><option value="unplayed">No plays only</option><option value="all">All owned games</option></select></label>
+<label class="field"><span>Players</span><input id="players" type="number" min="1" placeholder="Any"></label>
+<label class="field"><span>Maximum time</span><select id="time"><option value="">Any</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option><option value="90">90 min</option><option value="120">2 hours</option><option value="180">3 hours</option></select></label>
+</div>
+<div class="tag-grid" id="filterTags" style="margin-top:12px"></div>
+</div>
+<div class="grid4">
+<div class="stat"><strong id="ownedCount">0</strong><span>Owned</span></div><div class="stat"><strong id="eligibleCount">0</strong><span>Eligible</span></div><div class="stat"><strong id="unplayedCount">0</strong><span>Unplayed</span></div><div class="stat"><strong id="healthScoreMini">0%</strong><span>Health</span></div>
+</div>
+<div class="card wheel-card">
+<div class="wheel-stage"><div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="620" height="620"></canvas></div></div>
+<button id="spin" class="primary" style="width:100%;padding:16px" disabled>CHOOSE TONIGHT'S GAME</button>
+</div>
+<div id="result" class="card reveal hidden">
+<div class="art-wrap"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
+<div class="reveal-body">
+<h2 id="gameName" class="game-title"></h2><div id="gameYear" class="game-year"></div>
+<div class="detail-grid"><div class="detail"><strong id="gamePlayers">—</strong><span>Players</span></div><div class="detail"><strong id="gameTime">—</strong><span>Time</span></div><div class="detail"><strong id="gameWeight">—</strong><span>Weight</span></div><div class="detail"><strong id="gameRating">—</strong><span>BGG rating</span></div></div>
+<div class="grid2"><div><h3>Howl Score</h3><div id="howlScore" class="score">0</div></div><div><h3>Why this game?</h3><div id="scoreReasons"></div></div></div>
+<h3 style="margin-top:16px">Household tags</h3><div id="gameTags" class="tag-grid"></div>
+<h3 style="margin-top:16px">Your BGG comments</h3><div id="gameComments" class="card" style="margin:8px 0"></div>
+<div class="grid2"><a id="bggLink" class="button" target="_blank">View on BGG</a><a id="dizedLink" class="button" target="_blank">Search Dized</a><a id="youtubeLink" class="button" target="_blank">YouTube Tutorial</a><button id="addQueue">Add to Queue</button></div>
+<div class="grid3" style="margin-top:10px"><button id="play" class="play">Log Play</button><button id="pass" class="pass">Pass</button><button id="spinAgain">Choose Again</button></div>
+</div></div>
+</section>
 
-      <div class="grid2">
-        <label class="field"><span>BGG username</span><input id="bggUsername" type="text" placeholder="sjsfossil"></label>
-        <button id="syncBgg" class="primary" style="align-self:end">Sync with BGG</button>
-      </div>
+<section id="tab-queue" class="tab-panel hidden"><div class="card"><div class="row between"><h2>Game Night Queue</h2><button id="clearQueue" class="danger">Clear Queue</button></div><div id="queueList" class="muted">No games queued.</div></div></section>
 
-      <div class="row" style="margin-top:12px">
-        <label class="file-label" for="csv">Import or update BGG CSV</label>
-        <input id="csv" type="file" accept=".csv,text/csv">
-        <button id="reloadDb">Reload from Database</button>
-      </div>
-      <div id="syncStatus" class="status">Loading your collection…</div>
-    </section>
+<section id="tab-collection" class="tab-panel hidden">
+<div class="card"><h2>Collection</h2><input id="collectionSearch" placeholder="Search your collection"><div id="collectionList" style="margin-top:12px"></div></div>
+</section>
 
-    <section class="card">
-      <div class="section-title"><h2>Tonight</h2><span class="pill"><i class="dot green"></i><span>Live filters</span></span></div>
-      <div class="grid3">
-        <label class="field"><span>Games</span>
-          <select id="scope"><option value="unplayed">No plays only</option><option value="all">All owned games</option></select>
-        </label>
-        <label class="field"><span>Players</span><input id="players" type="number" min="1" max="99" placeholder="Any"></label>
-        <label class="field"><span>Maximum time</span>
-          <select id="time"><option value="">Any length</option><option value="30">30 minutes</option><option value="45">45 minutes</option><option value="60">1 hour</option><option value="90">1.5 hours</option><option value="120">2 hours</option><option value="180">3 hours</option><option value="240">4 hours</option></select>
-        </label>
-      </div>
-      <button id="clearFilters" style="margin-top:12px">Clear Filters</button>
-    </section>
+<section id="tab-health" class="tab-panel hidden">
+<div class="card"><h2>Collection Health</h2><div class="grid4"><div class="stat"><strong id="healthScore">0%</strong><span>Health score</span></div><div class="stat"><strong id="playedPct">0%</strong><span>Collection played</span></div><div class="stat"><strong id="recentPlays">0</strong><span>Plays last 30 days</span></div><div class="stat"><strong id="taggedPct">0%</strong><span>Games tagged</span></div></div><div class="health-bar" style="margin-top:16px"><div id="healthFill" class="health-fill"></div></div></div>
+<div class="grid2"><div class="card"><h3>Needs attention</h3><div id="healthWarnings"></div></div><div class="card"><h3>Suggested challenge</h3><div id="healthChallenge"></div></div></div>
+<div class="card"><h3>Collection statistics</h3><div id="statsDetail"></div></div>
+</section>
 
-    <section class="card">
-      <div class="hero-stats">
-        <div class="stat"><strong id="collectionCount">0</strong><span>Owned games</span></div>
-        <div class="stat"><strong id="eligibleCount">0</strong><span>Eligible tonight</span></div>
-        <div class="stat"><strong id="passCount">0</strong><span>Passed</span></div>
-        <div class="stat"><strong id="playCount">0</strong><span>Selected</span></div>
-      </div>
-    </section>
+<section id="tab-history" class="tab-panel hidden"><div class="card"><h2>Play History</h2><div id="playHistory">No plays logged.</div></div><div class="card"><h2>Pass History</h2><div id="passHistory">No passes yet.</div></div></section>
 
-    <section class="card wheel-card">
-      <div class="wheel-status">
-        <span class="wheel-chip">🐺 Howling Meeple Pick</span>
-        <span class="wheel-chip" id="wheelEligibleChip">0 eligible games</span>
-      </div>
-      <div class="wheel-stage">
-        <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="620" height="620"></canvas></div>
-      </div>
-      <div class="spin-caption">The wheel chooses from every game matching tonight’s filters.</div>
-      <button id="spin" class="primary spin-button" disabled>SPIN FOR TONIGHT'S GAME</button>
-    </section>
-
-    <section id="result" class="card reveal hidden">
-      <div class="art-wrap"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
-      <div class="reveal-body">
-        <h2 id="gameName" class="game-title"></h2>
-        <div id="gameYear" class="game-year"></div>
-        <div class="details">
-          <div class="detail"><strong id="gamePlayers">—</strong><span>Players</span></div>
-          <div class="detail"><strong id="gameTime">—</strong><span>Time</span></div>
-          <div class="detail"><strong id="gameWeight">—</strong><span>Weight</span></div>
-          <div class="detail"><strong id="gameRating">—</strong><span>BGG rating</span></div>
-        </div>
-        <strong>Your BGG comments</strong>
-        <div id="gameComments" class="comments"></div>
-        <div class="actions2">
-          <a id="bggLink" class="button" target="_blank" rel="noopener">View on BGG</a>
-          <a id="dizedLink" class="button" target="_blank" rel="noopener">Search Dized Tutorial</a>
-        </div>
-        <div class="actions3">
-          <button id="play" class="play">Play It</button>
-          <button id="pass" class="pass">Pass</button>
-          <button id="spinAgain">Spin Again</button>
-        </div>
-      </div>
-    </section>
-
-    <div id="confetti" class="confetti hidden"></div>
-
-    <section class="card">
-      <div class="section-title">
-        <h2>Decision history</h2>
-        <button id="reset" class="danger">Reset Decisions</button>
-      </div>
-      <div id="history" class="muted">No decisions yet.</div>
-    </section>
-  </section>
+<section id="tab-settings" class="tab-panel hidden">
+<div class="card"><h2>Collection sync</h2><div class="grid2"><label class="field"><span>BGG username</span><input id="bggUsername"></label><button id="syncBgg" class="primary" style="align-self:end">Sync with BGG</button></div><div class="row" style="margin-top:12px"><label class="file-label" for="csv">Import BGG CSV</label><input id="csv" type="file" accept=".csv,text/csv"><button id="reloadDb">Reload Database</button></div><div id="syncStatus" class="status"></div></div>
+<div class="card"><h2>Household tags</h2><div class="grid2"><input id="newTagName" placeholder="New tag, e.g. Date Night"><button id="addTag">Add Tag</button></div><div id="manageTags" class="tag-grid" style="margin-top:12px"></div></div>
+</section>
+<div id="confetti" class="confetti hidden"></div>
+</section>
 </main>
 
 <script>
-const SUPABASE_URL="https://yivnzvgexutjacljqijr.supabase.co";
-const SUPABASE_KEY="sb_publishable_lzEc-Mqaomi1jDtaFLst7Q_PcLvywrt";
-const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const $=id=>document.getElementById(id);
-const el={
- authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),
- authStatus:$('authStatus'),accountEmail:$('accountEmail'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),
- bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),syncPill:$('syncPill'),
- scope:$('scope'),players:$('players'),time:$('time'),clearFilters:$('clearFilters'),
- collectionCount:$('collectionCount'),eligibleCount:$('eligibleCount'),passCount:$('passCount'),playCount:$('playCount'),
- wheel:$('wheel'),spin:$('spin'),wheelEligibleChip:$('wheelEligibleChip'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),
- gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),
- gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),play:$('play'),pass:$('pass'),
- spinAgain:$('spinAgain'),confetti:$('confetti'),history:$('history'),reset:$('reset')
-};
+const SUPABASE_URL="https://yivnzvgexutjacljqijr.supabase.co",SUPABASE_KEY="sb_publishable_lzEc-Mqaomi1jDtaFLst7Q_PcLvywrt";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=id=>document.getElementById(id);
+const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),confetti:$('confetti')};
 const ctx=el.wheel.getContext('2d');
-let user=null,householdId=null,games=[],eligible=[],decisions=[],current=null,rotation=0,spinning=false,saveTimer=null;
+let user=null,householdId=null,games=[],eligible=[],tags=[],gameTagMap=new Map(),plays=[],passes=[],queue=[],current=null,rotation=0,spinning=false,activeFilterTags=new Set();
 
-function status(target,msg,type=''){target.textContent=msg;target.className='status '+type}
-function num(v){if(v===null||v===undefined||String(v).trim()==='')return null;const n=Number(String(v).replace(/,/g,''));return Number.isFinite(n)?n:null}
-function bool(v){return String(v).trim()==='1'||String(v).toLowerCase()==='true'}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function status(t,m,c=''){t.textContent=m;t.className='status '+c} function num(v){if(v==null||String(v).trim()==='')return null;const n=Number(v);return Number.isFinite(n)?n:null} function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function parseCSV(text){const rows=[];let row=[],field='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){field+='"';i++}else q=!q}else if(c===','&&!q){row.push(field);field=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(field);field='';if(row.some(x=>x!==''))rows.push(row);row=[]}else field+=c}if(field||row.length){row.push(field);rows.push(row)}if(rows.length<2)return[];const h=rows[0].map(x=>x.trim().toLowerCase());return rows.slice(1).map(v=>Object.fromEntries(h.map((x,i)=>[x,v[i]??''])))}
+function csvGame(r){return{user_id:user.id,household_id:householdId,bgg_id:num(r.objectid),name:r.objectname||r.name||'',year_published:num(r.yearpublished),owned:String(r.own)==='1',num_plays:num(r.numplays)||0,item_type:r.itemtype||'',min_players:num(r.minplayers),max_players:num(r.maxplayers),min_play_time:num(r.minplaytime),max_play_time:num(r.maxplaytime)||num(r.playingtime),average_rating:num(r.average)||num(r.baverage),weight:num(r.avgweight),comment:r.comment||'',updated_at:new Date().toISOString()}}
 
-function parseCSV(text){
- const rows=[];let row=[],field='',quoted=false;
- for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];
-  if(c==='"'){if(quoted&&n==='"'){field+='"';i++}else quoted=!quoted}
-  else if(c===','&&!quoted){row.push(field);field=''}
-  else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(field);field='';if(row.some(x=>x!==''))rows.push(row);row=[]}
-  else field+=c
- }
- if(field||row.length){row.push(field);rows.push(row)}
- if(rows.length<2)return[];
- const headers=rows[0].map(x=>x.trim().toLowerCase());
- return rows.slice(1).map(vals=>Object.fromEntries(headers.map((h,i)=>[h,vals[i]??''])));
-}
-function csvToGame(r){
- const minPlay=num(r.minplaytime),maxPlay=num(r.maxplaytime),playing=num(r.playingtime);
- return{user_id:user.id,household_id:householdId,bgg_id:num(r.objectid),name:r.objectname||r.name||'',year_published:num(r.yearpublished),
- owned:bool(r.own),num_plays:num(r.numplays)||0,item_type:r.itemtype||r.objecttype||'',min_players:num(r.minplayers),
- max_players:num(r.maxplayers),min_play_time:minPlay,max_play_time:maxPlay??playing,average_rating:num(r.average)||num(r.baverage),
- weight:num(r.avgweight)||num(r.weight),comment:r.comment||'',private_comment:r.privatecomment||'',updated_at:new Date().toISOString()}
-}
+async function enterApp(u){user=u;const{data:m,error}=await sb.from('household_members').select('household_id').eq('user_id',u.id).limit(1).maybeSingle();if(error||!m){status(el.authStatus,'This account is not linked to a household.','error');return}householdId=m.household_id;el.authCard.classList.add('hidden');el.app.classList.remove('hidden');el.accountEmail.textContent=u.email;await loadAll()}
+async function loadAll(){status(el.syncStatus,'Loading household data…');const [g,t,gt,p,d,q,s]=await Promise.all([sb.from('games').select('*').eq('household_id',householdId).order('name'),sb.from('household_tags').select('*').eq('household_id',householdId).order('name'),sb.from('game_tags').select('*').eq('household_id',householdId),sb.from('game_plays').select('*').eq('household_id',householdId).order('played_at',{ascending:false}),sb.from('game_decisions').select('*').eq('household_id',householdId).order('created_at',{ascending:false}),sb.from('game_night_queue').select('*').eq('household_id',householdId).order('position'),sb.from('household_settings').select('*').eq('household_id',householdId).maybeSingle()]);if(g.error)return status(el.syncStatus,g.error.message,'error');games=g.data||[];tags=t.data||[];gameTagMap=new Map();for(const x of gt.data||[]){if(!gameTagMap.has(x.game_id))gameTagMap.set(x.game_id,new Set());gameTagMap.get(x.game_id).add(x.tag_id)}plays=p.data||[];passes=(d.data||[]).filter(x=>x.decision==='pass');queue=q.data||[];if(s.data){el.scope.value=s.data.game_scope||'unplayed';el.players.value=s.data.player_count||'';el.time.value=s.data.available_minutes||'';el.bggUsername.value=s.data.bgg_username||'TheHowlingMeeple'}status(el.syncStatus,`Loaded ${games.length} games.`,'ok');renderAll()}
+function renderAll(){applyFilters();renderTags();renderQueue();renderCollection();renderHealth();renderHistory();renderManageTags()}
+function gameLastPlayed(id){const x=plays.find(p=>p.game_id===id);return x?new Date(x.played_at):null}
+function scoreGame(g){let score=0,reasons=[];if(Number(g.num_plays)===0){score+=25;reasons.push(['+25','Never played'])}const last=gameLastPlayed(g.id);if(last){const days=(Date.now()-last)/86400000;if(days<14){score-=30;reasons.push(['-30','Played recently'])}else if(days>180){score+=15;reasons.push(['+15','Not played in 6+ months'])}}else{score+=10;reasons.push(['+10','No app play logged'])}if(g.average_rating){const pts=Math.round((Number(g.average_rating)-6)*5);score+=pts;reasons.push([`${pts>=0?'+':''}${pts}`,'BGG rating'])}const ts=gameTagMap.get(g.id)||new Set();if(ts.size){score+=Math.min(20,ts.size*5);reasons.push([`+${Math.min(20,ts.size*5)}`,'Household tags'])}if(passes.some(p=>p.game_id===g.id&&Date.now()-new Date(p.created_at)<7*86400000)){score-=10;reasons.push(['-10','Passed recently'])}return{score,reasons}}
+function applyFilters(){const pc=num(el.players.value),tm=num(el.time.value);eligible=games.filter(g=>g.owned&&!String(g.item_type).includes('expansion')&&(el.scope.value==='all'||Number(g.num_plays)===0)&&(pc==null||(g.min_players<=pc&&g.max_players>=pc))&&(tm==null||(g.max_play_time&&g.max_play_time<=tm))&&([...activeFilterTags].every(t=>(gameTagMap.get(g.id)||new Set()).has(t))));el.ownedCount.textContent=games.filter(g=>g.owned).length;el.eligibleCount.textContent=eligible.length;el.unplayedCount.textContent=games.filter(g=>g.owned&&Number(g.num_plays)===0).length;el.spin.disabled=!eligible.length;drawWheel();renderHealth()}
+function chooseGame(){if(el.mode.value==='random')return eligible[Math.floor(Math.random()*eligible.length)];const ranked=[...eligible].map(g=>({g,...scoreGame(g)}));if(el.mode.value==='highest')ranked.sort((a,b)=>(b.g.average_rating||0)-(a.g.average_rating||0));else if(el.mode.value==='overdue')ranked.sort((a,b)=>(gameLastPlayed(a.g.id)?.getTime()||0)-(gameLastPlayed(b.g.id)?.getTime()||0));else ranked.sort((a,b)=>b.score-a.score);const pool=ranked.slice(0,Math.min(10,ranked.length));return pool[Math.floor(Math.random()*pool.length)].g}
+function drawWheel(){const w=620,c=310,r=286;ctx.clearRect(0,0,w,w);if(!eligible.length){ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(c,c,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cbd5e1';ctx.font='700 28px sans-serif';ctx.textAlign='center';ctx.fillText('No games match',c,c);return}const n=18,a=Math.PI*2/n;for(let i=0;i<n;i++){const s=rotation+i*a,h=(262+i*23)%360,g=ctx.createRadialGradient(c,c,20,c,c,r);g.addColorStop(0,`hsl(${h} 55% 28%)`);g.addColorStop(1,`hsl(${h} 72% 43%)`);ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,s,s+a);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.18)';ctx.stroke()}ctx.beginPath();ctx.arc(c,c,65,0,Math.PI*2);ctx.fillStyle='#17102e';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='38px sans-serif';ctx.textAlign='center';ctx.fillText('🐺',c,c+13)}
+function spin(){if(spinning||!eligible.length)return;spinning=true;el.spin.disabled=true;const start=rotation,end=start+(6+Math.random()*4)*Math.PI*2,t0=performance.now();function f(now){const p=Math.min((now-t0)/3000,1),e=1-Math.pow(1-p,4);rotation=start+(end-start)*e;drawWheel();if(p<1)requestAnimationFrame(f);else{spinning=false;el.spin.disabled=false;current=chooseGame();showGame(current)}}requestAnimationFrame(f)}
+function showGame(g){el.gameName.textContent=g.name;el.gameYear.textContent=g.year_published||'';el.gamePlayers.textContent=g.min_players?`${g.min_players}–${g.max_players}`:'—';el.gameTime.textContent=g.max_play_time?`${g.max_play_time} min`:'—';el.gameWeight.textContent=g.weight?Number(g.weight).toFixed(1):'—';el.gameRating.textContent=g.average_rating?Number(g.average_rating).toFixed(1):'—';const sc=scoreGame(g);el.howlScore.textContent=sc.score;el.scoreReasons.innerHTML=sc.reasons.map(r=>`<div class="reason ${r[0].startsWith('-')?'negative':'positive'}"><strong>${r[0]}</strong> ${esc(r[1])}</div>`).join('');el.gameComments.textContent=g.comment||'No BGG comment saved.';el.bggLink.href=`https://boardgamegeek.com/boardgame/${g.bgg_id}`;el.dizedLink.href=`https://www.google.com/search?q=${encodeURIComponent('site:dized.com '+g.name+' tutorial')}`;el.youtubeLink.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(g.name+' how to play board game')}`;el.art.style.display='none';if(g.image_url){el.art.src=g.image_url;el.art.style.display='block'}renderGameTags(g);el.result.classList.remove('hidden');confetti();el.result.scrollIntoView({behavior:'smooth'})}
+function renderTags(){el.filterTags.innerHTML=tags.map(t=>`<button class="tag ${activeFilterTags.has(t.id)?'active':''}" onclick="toggleFilterTag('${t.id}')">${esc(t.name)}</button>`).join('')}
+window.toggleFilterTag=id=>{activeFilterTags.has(id)?activeFilterTags.delete(id):activeFilterTags.add(id);renderTags();applyFilters()}
+function renderGameTags(g){const set=gameTagMap.get(g.id)||new Set();el.gameTags.innerHTML=tags.map(t=>`<button class="tag ${set.has(t.id)?'active':''}" onclick="toggleGameTag('${g.id}','${t.id}')">${esc(t.name)}</button>`).join('')}
+window.toggleGameTag=async(gameId,tagId)=>{const set=gameTagMap.get(gameId)||new Set();if(set.has(tagId)){await sb.from('game_tags').delete().eq('household_id',householdId).eq('game_id',gameId).eq('tag_id',tagId);set.delete(tagId)}else{await sb.from('game_tags').insert({household_id:householdId,game_id:gameId,tag_id:tagId,created_by:user.id});set.add(tagId)}gameTagMap.set(gameId,set);renderGameTags(current);renderAll()}
+async function logPlay(){if(!current)return;await sb.from('game_plays').insert({household_id:householdId,game_id:current.id,logged_by:user.id,player_count:num(el.players.value),duration_minutes:num(el.time.value),played_at:new Date().toISOString()});await sb.from('game_decisions').insert({household_id:householdId,user_id:user.id,game_id:current.id,decision:'play',player_count:num(el.players.value),available_minutes:num(el.time.value)});await loadAll();el.result.classList.add('hidden')}
+async function passGame(){if(!current)return;await sb.from('game_decisions').insert({household_id:householdId,user_id:user.id,game_id:current.id,decision:'pass',player_count:num(el.players.value),available_minutes:num(el.time.value)});await loadAll();el.result.classList.add('hidden')}
+async function addQueue(){if(!current)return;const pos=(queue.at(-1)?.position||0)+1;await sb.from('game_night_queue').upsert({household_id:householdId,game_id:current.id,added_by:user.id,position:pos},{onConflict:'household_id,game_id'});await loadAll()}
+function renderQueue(){if(!queue.length){el.queueList.textContent='No games queued.';return}const by=new Map(games.map(g=>[g.id,g]));el.queueList.innerHTML=queue.map((q,i)=>`<div class="queue-item"><span><strong>${i+1}. ${esc(by.get(q.game_id)?.name||'Game')}</strong></span><button onclick="removeQueue('${q.id}')">Remove</button></div>`).join('')}
+window.removeQueue=async id=>{await sb.from('game_night_queue').delete().eq('id',id);await loadAll()}
+function renderCollection(){const q=el.collectionSearch.value.toLowerCase();const list=games.filter(g=>g.owned&&g.name.toLowerCase().includes(q)).slice(0,150);el.collectionList.innerHTML=list.map(g=>`<div class="game-row"><span><strong>${esc(g.name)}</strong><div class="small muted">${g.num_plays||0} BGG plays • ${g.max_play_time||'?'} min</div></span><button onclick="openGame('${g.id}')">Open</button></div>`).join('')}
+window.openGame=id=>{current=games.find(g=>g.id===id);showGame(current);document.querySelector('[data-tab="tonight"]').click()}
+function renderHealth(){const owned=games.filter(g=>g.owned),played=owned.filter(g=>Number(g.num_plays)>0||plays.some(p=>p.game_id===g.id)),tagged=owned.filter(g=>(gameTagMap.get(g.id)||new Set()).size),recent=plays.filter(p=>Date.now()-new Date(p.played_at)<30*86400000).length;const playedP=owned.length?Math.round(played.length/owned.length*100):0,tagP=owned.length?Math.round(tagged.length/owned.length*100):0;const health=Math.round(playedP*.65+Math.min(100,recent*5)*.2+tagP*.15);el.healthScore.textContent=el.healthScoreMini.textContent=health+'%';el.playedPct.textContent=playedP+'%';el.recentPlays.textContent=recent;el.taggedPct.textContent=tagP+'%';el.healthFill.style.width=health+'%';const unplayed=owned.length-played.length;el.healthWarnings.innerHTML=`<div class="reason">${unplayed} games have no recorded play.</div><div class="reason">${owned.length-tagged.length} games have no household tags.</div><div class="reason">${owned.filter(g=>!g.max_play_time).length} games lack play-time data.</div>`;el.healthChallenge.innerHTML=unplayed?`<strong>Unplayed challenge:</strong><p class="muted" style="margin-top:8px">Play ${Math.min(5,unplayed)} unplayed games before your next collection purchase.</p>`:`<strong>Replay challenge:</strong><p class="muted" style="margin-top:8px">Revisit a favorite you have not logged recently.</p>`;const avg=owned.filter(g=>g.weight).reduce((a,g)=>a+Number(g.weight),0)/(owned.filter(g=>g.weight).length||1);el.statsDetail.innerHTML=`<div class="grid3"><div class="stat"><strong>${owned.length}</strong><span>Total owned</span></div><div class="stat"><strong>${avg.toFixed(2)}</strong><span>Average weight</span></div><div class="stat"><strong>${plays.length}</strong><span>App plays logged</span></div></div>`}
+function renderHistory(){const by=new Map(games.map(g=>[g.id,g.name]));el.playHistory.innerHTML=plays.length?plays.slice(0,100).map(p=>`<div class="history-item"><span>${esc(by.get(p.game_id)||'Game')}</span><span>${new Date(p.played_at).toLocaleDateString()}</span></div>`).join(''):'No plays logged.';el.passHistory.innerHTML=passes.length?passes.slice(0,100).map(p=>`<div class="history-item"><span>${esc(by.get(p.game_id)||'Game')}</span><span>${new Date(p.created_at).toLocaleDateString()}</span></div>`).join(''):'No passes yet.'}
+function renderManageTags(){el.manageTags.innerHTML=tags.map(t=>`<span class="tag">${esc(t.name)}</span>`).join('')}
+function confetti(){el.confetti.innerHTML='';el.confetti.classList.remove('hidden');for(let i=0;i<55;i++){const p=document.createElement('i');p.className='piece';p.style.left=Math.random()*100+'vw';p.style.background=['#f43f5e','#f59e0b','#22c55e','#38bdf8','#a78bfa'][i%5];p.style.setProperty('--drift',(Math.random()*240-120)+'px');el.confetti.appendChild(p)}setTimeout(()=>el.confetti.classList.add('hidden'),2200)}
 
-async function signIn(){
- status(el.authStatus,'Signing in…');
- const{data,error}=await sb.auth.signInWithPassword({email:el.email.value.trim(),password:el.password.value});
- if(error)return status(el.authStatus,error.message,'error');
- await enterApp(data.user)
-}
-async function enterApp(u){
- user=u;el.authCard.classList.add('hidden');el.app.classList.remove('hidden');el.accountEmail.textContent=u.email||'Signed in';
- const {data:membership,error}=await sb.from('household_members').select('household_id,role').eq('user_id',u.id).limit(1).maybeSingle();
- if(error||!membership){
-   status(el.syncStatus,'This account has not been added to a household yet. Run the household migration in Supabase.','error');
-   return;
- }
- householdId=membership.household_id;
- await Promise.all([loadGames(),loadDecisions(),loadSettings()]);applyFilters()
-}
-async function loadGames(){
- status(el.syncStatus,'Loading your collection from Supabase…');
- const{data,error}=await sb.from('games').select('*').eq('household_id',householdId).order('name');
- if(error)return status(el.syncStatus,'Database error: '+error.message,'error');
- games=data||[];status(el.syncStatus,`Loaded ${games.length} games from the database.`,'ok');applyFilters()
-}
-async function loadDecisions(){
- const{data,error}=await sb.from('game_decisions').select('id,game_id,decision,created_at').eq('household_id',householdId).order('created_at',{ascending:false});
- if(error)return status(el.syncStatus,'Decision sync error: '+error.message,'error');
- decisions=data||[];renderHistory()
-}
-async function loadSettings(){
- const{data}=await sb.from('household_settings').select('*').eq('household_id',householdId).maybeSingle();
- if(data){el.scope.value=data.game_scope||'unplayed';el.players.value=data.player_count||'';el.time.value=data.available_minutes||'';el.bggUsername.value=data.bgg_username||''}
-}
-async function saveSettings(){
- if(!user)return;
- await sb.from('household_settings').upsert({household_id:householdId,bgg_username:el.bggUsername.value.trim()||null,game_scope:el.scope.value,
- player_count:num(el.players.value),available_minutes:num(el.time.value),exclude_expansions:true,updated_at:new Date().toISOString()},{onConflict:'household_id'})
-}
-function queueSettings(){clearTimeout(saveTimer);saveTimer=setTimeout(saveSettings,450);applyFilters()}
-
-async function importCSV(file){
- if(!file)return;status(el.syncStatus,'Reading BGG CSV…');
- const rows=parseCSV(await file.text());
- const mapped=rows.map(csvToGame).filter(g=>g.bgg_id&&g.name);
- const deduped=[...new Map(mapped.map(g=>[g.bgg_id,g])).values()];
- if(!deduped.length)return status(el.syncStatus,'No recognizable BGG games were found.','error');
- status(el.syncStatus,`Uploading ${deduped.length} games…`);
- let done=0;
- for(let i=0;i<deduped.length;i+=100){
-  const chunk=deduped.slice(i,i+100);
-  const{error}=await sb.from('games').upsert(chunk,{onConflict:'household_id,bgg_id'});
-  if(error)return status(el.syncStatus,`Upload stopped after ${done} games: ${error.message}`,'error');
-  done+=chunk.length;status(el.syncStatus,`Uploaded ${done} of ${deduped.length} games…`)
- }
- status(el.syncStatus,`Import complete: ${deduped.length} games updated.`,'ok');await loadGames()
-}
-
-async function syncWithBgg(){
- const username=el.bggUsername.value.trim();
- if(!username)return status(el.syncStatus,'Enter your BGG username first.','error');
- el.syncBgg.disabled=true;status(el.syncStatus,'Attempting BGG synchronization…');
- try{
-  await saveSettings();
-  const{data,error}=await sb.functions.invoke('sync-bgg-collection',{body:{username,householdId}});
-  if(error)throw error;if(data?.error)throw new Error(data.error);
-  status(el.syncStatus,`Sync complete: ${data.total||0} games • ${data.newGames||0} new • ${data.artworkAdded||0} artwork links added`,'ok');
-  el.syncPill.innerHTML='<i class="dot green"></i><span>BGG sync ready</span>';
-  await loadGames()
- }catch(error){
-  const msg=error.message||String(error);
-  status(el.syncStatus,`BGG sync is not ready yet: ${msg}`,'error');
-  el.syncPill.innerHTML='<i class="dot"></i><span>BGG approval pending</span>'
- }finally{el.syncBgg.disabled=false}
-}
-
-function latestDecisionMap(){const m=new Map();for(const d of decisions)if(!m.has(d.game_id))m.set(d.game_id,d);return m}
-function applyFilters(){
- const player=num(el.players.value),maxT=num(el.time.value),dmap=latestDecisionMap();
- eligible=games.filter(g=>{
-  if(!g.owned)return false;
-  if(String(g.item_type).toLowerCase().includes('expansion'))return false;
-  if(el.scope.value==='unplayed'&&Number(g.num_plays)!==0)return false;
-  if(player!==null&&(!(g.min_players<=player)||!(g.max_players>=player)))return false;
-  if(maxT!==null&&(!(g.max_play_time>0)||g.max_play_time>maxT))return false;
-  if(dmap.has(g.id))return false;
-  return true
- });
- el.collectionCount.textContent=games.filter(g=>g.owned).length;
- el.eligibleCount.textContent=eligible.length;el.wheelEligibleChip.textContent=`${eligible.length} eligible game${eligible.length===1?'':'s'}`;
- const vals=[...dmap.values()];
- el.passCount.textContent=vals.filter(x=>x.decision==='pass').length;
- el.playCount.textContent=vals.filter(x=>x.decision==='play').length;
- el.spin.disabled=!eligible.length||spinning;drawWheel();renderHistory()
-}
-function drawWheel(){
- const w=el.wheel.width,h=el.wheel.height,cx=w/2,cy=h/2,r=Math.min(w,h)/2-22;
- ctx.clearRect(0,0,w,h);
- const glow=ctx.createRadialGradient(cx,cy,r*.55,cx,cy,r);
- glow.addColorStop(0,'rgba(124,58,237,.02)');glow.addColorStop(.82,'rgba(124,58,237,.08)');glow.addColorStop(1,'rgba(167,139,250,.35)');
- ctx.fillStyle=glow;ctx.beginPath();ctx.arc(cx,cy,r+10,0,Math.PI*2);ctx.fill();
- if(!eligible.length){
-   ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-   ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=4;ctx.stroke();
-   ctx.fillStyle='#cbd5e1';ctx.font='700 27px sans-serif';ctx.textAlign='center';
-   ctx.fillText(games.length?'No games match':'Import your collection',cx,cy-6);
-   ctx.font='500 16px sans-serif';ctx.fillStyle='#94a3b8';
-   ctx.fillText(games.length?'Adjust tonight’s filters':'Then come back and spin',cx,cy+25);
-   return;
- }
- const wedges=18,arc=Math.PI*2/wedges;
- for(let i=0;i<wedges;i++){
-   const s=rotation+i*arc,hue=(262+i*23)%360;
-   const grad=ctx.createRadialGradient(cx,cy,r*.08,cx,cy,r);
-   grad.addColorStop(0,`hsl(${hue} 58% 28%)`);grad.addColorStop(.72,`hsl(${hue} 67% 46%)`);grad.addColorStop(1,`hsl(${hue} 72% 35%)`);
-   ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,s+arc);ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-   ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=2;ctx.stroke();
-   ctx.save();ctx.translate(cx,cy);ctx.rotate(s+arc/2);ctx.textAlign='right';ctx.font='700 22px sans-serif';
-   ctx.fillStyle='rgba(255,255,255,.55)';ctx.fillText(i%2===0?'🐾':'✦',r-28,7);ctx.restore();
- }
- ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(248,250,252,.7)';ctx.lineWidth=7;ctx.stroke();
- ctx.beginPath();ctx.arc(cx,cy,r-8,0,Math.PI*2);ctx.strokeStyle='rgba(15,23,42,.9)';ctx.lineWidth=4;ctx.stroke();
- const hub=ctx.createRadialGradient(cx-16,cy-18,8,cx,cy,72);
- hub.addColorStop(0,'#4c1d95');hub.addColorStop(.58,'#241447');hub.addColorStop(1,'#0f172a');
- ctx.beginPath();ctx.arc(cx,cy,67,0,Math.PI*2);ctx.fillStyle=hub;ctx.fill();
- ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=5;ctx.stroke();
- ctx.beginPath();ctx.arc(cx,cy,53,0,Math.PI*2);ctx.strokeStyle='rgba(167,139,250,.55)';ctx.lineWidth=2;ctx.stroke();
- ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='800 36px sans-serif';ctx.fillText('🐺',cx,cy+12);
- ctx.font='800 11px sans-serif';ctx.fillStyle='rgba(255,255,255,.72)';ctx.fillText('HOWLING MEEPLE',cx,cy+39);
-}
-function spin(){
- if(spinning||!eligible.length)return;spinning=true;el.spin.disabled=true;el.result.classList.add('hidden');
- const idx=Math.floor(Math.random()*eligible.length),start=rotation,end=rotation+(6+Math.random()*4)*Math.PI*2,t0=performance.now();
- const frame=now=>{const p=Math.min((now-t0)/3200,1),e=1-Math.pow(1-p,4);rotation=start+(end-start)*e;drawWheel();
- if(p<1)requestAnimationFrame(frame);else{rotation%=Math.PI*2;current=eligible[idx];showGame(current);spinning=false;el.spin.disabled=false}};
- requestAnimationFrame(frame)
-}
-function showGame(g){
- el.gameName.textContent=g.name;el.gameYear.textContent=g.year_published||'';
- el.gamePlayers.textContent=(g.min_players||g.max_players)?`${g.min_players||'?'}–${g.max_players||'?'}`:'—';
- const min=g.min_play_time,max=g.max_play_time;el.gameTime.textContent=max?(min&&min!==max?`${min}–${max} min`:`${max} min`):'—';
- el.gameWeight.textContent=g.weight?Number(g.weight).toFixed(1):'—';el.gameRating.textContent=g.average_rating?Number(g.average_rating).toFixed(1):'—';
- el.gameComments.textContent=g.comment||'No BGG comment saved for this game.';
- el.bggLink.href=`https://boardgamegeek.com/boardgame/${g.bgg_id}`;
- el.dizedLink.href=`https://www.google.com/search?q=${encodeURIComponent('site:dized.com '+g.name+' tutorial')}`;
- el.art.style.display='none';el.art.removeAttribute('src');
- if(g.image_url){el.art.src=g.image_url;el.art.style.display='block'}else tryArtwork(g);
- el.result.classList.remove('hidden');el.result.classList.remove('reveal-flash');void el.result.offsetWidth;el.result.classList.add('reveal-flash');confetti();el.result.scrollIntoView({behavior:'smooth',block:'start'})
-}
-async function tryArtwork(g){
- try{
-  const{data,error}=await sb.functions.invoke('fetch-bgg-art',{body:{bggId:g.bgg_id,gameId:g.id,householdId}});
-  if(error)throw error;const url=data?.imageUrl||data?.thumbnailUrl;if(!url)return;
-  g.image_url=data.imageUrl||url;g.thumbnail_url=data.thumbnailUrl||null;el.art.src=url;el.art.style.display='block'
- }catch(error){console.error(error)}
-}
-function confetti(){
- el.confetti.innerHTML='';el.confetti.classList.remove('hidden');
- const colors=['#f43f5e','#f59e0b','#22c55e','#38bdf8','#a78bfa','#f8fafc'];
- for(let i=0;i<70;i++){const p=document.createElement('i');p.className='piece';p.style.left=Math.random()*100+'vw';p.style.background=colors[i%colors.length];p.style.setProperty('--drift',(Math.random()*260-130)+'px');p.style.animationDelay=Math.random()*.35+'s';el.confetti.appendChild(p)}
- setTimeout(()=>el.confetti.classList.add('hidden'),2400)
-}
-async function decide(decision){
- if(!current)return;
- const{error}=await sb.from('game_decisions').insert({user_id:user.id,household_id:householdId,game_id:current.id,decision,player_count:num(el.players.value),available_minutes:num(el.time.value)});
- if(error)return status(el.syncStatus,'Could not save decision: '+error.message,'error');
- await loadDecisions();current=null;el.result.classList.add('hidden');applyFilters()
-}
-function renderHistory(){
- const dmap=[...latestDecisionMap().values()];
- if(!dmap.length){el.history.textContent='No decisions yet.';return}
- const byId=new Map(games.map(g=>[g.id,g.name]));
- el.history.innerHTML=dmap.slice(0,50).map(d=>`<div class="history-item"><span>${esc(byId.get(d.game_id)||'Game')}</span><span class="badge ${d.decision}">${d.decision.toUpperCase()}</span></div>`).join('')
-}
-async function resetDecisions(){
- if(!confirm('Clear all synced Play/Pass decisions?'))return;
- const{error}=await sb.from('game_decisions').delete().eq('household_id',householdId);
- if(error)return status(el.syncStatus,error.message,'error');decisions=[];applyFilters()
-}
-
-el.signIn.onclick=signIn;el.password.addEventListener('keydown',e=>{if(e.key==='Enter')signIn()});
-el.signOut.onclick=async()=>{await sb.auth.signOut();location.reload()};
-el.csv.onchange=e=>importCSV(e.target.files[0]);el.reloadDb.onclick=async()=>{await Promise.all([loadGames(),loadDecisions()]);applyFilters()};
-el.syncBgg.onclick=syncWithBgg;el.bggUsername.addEventListener('change',saveSettings);
-[el.scope,el.players,el.time].forEach(x=>x.addEventListener('input',queueSettings));
-el.clearFilters.onclick=()=>{el.scope.value='unplayed';el.players.value='';el.time.value='';queueSettings()};
-el.spin.onclick=spin;el.spinAgain.onclick=()=>{el.result.classList.add('hidden');spin()};
-el.play.onclick=()=>decide('play');el.pass.onclick=()=>decide('pass');el.reset.onclick=resetDecisions;
-el.art.onerror=()=>{el.art.style.display='none'};
-sb.auth.getSession().then(({data})=>{if(data.session)enterApp(data.session.user)});
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-drawWheel();
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+b.dataset.tab).classList.remove('hidden')})
+el.signIn.onclick=async()=>{const{data,error}=await sb.auth.signInWithPassword({email:el.email.value.trim(),password:el.password.value});if(error)return status(el.authStatus,error.message,'error');enterApp(data.user)};el.signOut.onclick=async()=>{await sb.auth.signOut();location.reload()}
+;[el.mode,el.scope,el.players,el.time].forEach(x=>x.oninput=applyFilters);el.spin.onclick=spin;el.spinAgain.onclick=spin;el.play.onclick=logPlay;el.pass.onclick=passGame;el.addQueue.onclick=addQueue;el.collectionSearch.oninput=renderCollection;el.clearQueue.onclick=async()=>{await sb.from('game_night_queue').delete().eq('household_id',householdId);await loadAll()};el.addTag.onclick=async()=>{const name=el.newTagName.value.trim();if(!name)return;await sb.from('household_tags').insert({household_id:householdId,name,created_by:user.id});el.newTagName.value='';await loadAll()};
+el.csv.onchange=async e=>{const rows=parseCSV(await e.target.files[0].text()),mapped=[...new Map(rows.map(csvGame).filter(g=>g.bgg_id&&g.name).map(g=>[g.bgg_id,g])).values()];for(let i=0;i<mapped.length;i+=100)await sb.from('games').upsert(mapped.slice(i,i+100),{onConflict:'household_id,bgg_id'});await loadAll()};
+el.reloadDb.onclick=loadAll;el.syncBgg.onclick=()=>status(el.syncStatus,'BGG synchronization is waiting for application approval. CSV import remains available.','error');
+sb.auth.getSession().then(({data})=>{if(data.session)enterApp(data.session.user)});drawWheel();
 </script>
-</body>
-</html>
+</body></html>
