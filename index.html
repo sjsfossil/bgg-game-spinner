@@ -99,6 +99,20 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 
 <section id="tab-settings" class="tab-panel hidden">
 <div class="card"><h2>Collection sync</h2><div class="grid2"><label class="field"><span>BGG username</span><input id="bggUsername"></label><button id="syncBgg" class="primary" style="align-self:end">Sync with BGG</button></div><div class="row" style="margin-top:12px"><label class="file-label" for="csv">Import BGG CSV</label><input id="csv" type="file" accept=".csv,text/csv"><button id="reloadDb">Reload Database</button></div><div id="syncStatus" class="status"></div><div id="syncSummary" class="grid4 hidden" style="margin-top:14px"><div class="stat"><strong id="syncTotal">0</strong><span>Owned synced</span></div><div class="stat"><strong id="syncNew">0</strong><span>New games</span></div><div class="stat"><strong id="syncArt">0</strong><span>Artwork added</span></div><div class="stat"><strong id="syncRemaining">0</strong><span>Details remaining</span></div></div></div>
+<div class="card">
+  <h2>Developer Tools</h2>
+  <p class="muted small" style="margin-bottom:12px">Use these tools to test Supabase Edge Functions without changing your collection manually.</p>
+  <div class="grid2">
+    <button id="testBggArt">🧪 Test BGG Artwork</button>
+    <button id="refreshSelectedArt">🖼 Refresh Selected Game Art</button>
+    <button id="testCollectionSync">🔄 Test Collection Sync</button>
+    <button id="clearAppCache">🧹 Clear App Cache</button>
+  </div>
+  <div class="field" style="margin-top:12px">
+    <span>Developer output</span>
+    <pre id="devOutput" style="margin:0;background:#0d1728;border:1px solid var(--line);border-radius:13px;padding:12px;min-height:120px;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-word">No test run yet.</pre>
+  </div>
+</div>
 <div class="card"><h2>Household tags</h2><div class="grid2"><input id="newTagName" placeholder="New tag, e.g. Date Night"><button id="addTag">Add Tag</button></div><div id="manageTags" class="tag-grid" style="margin-top:12px"></div></div>
 </section>
 <div id="confetti" class="confetti hidden"></div>
@@ -108,7 +122,7 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 <script>
 const SUPABASE_URL="https://yivnzvgexutjacljqijr.supabase.co",SUPABASE_KEY="sb_publishable_lzEc-Mqaomi1jDtaFLst7Q_PcLvywrt";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=id=>document.getElementById(id);
-const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),syncSummary:$('syncSummary'),syncTotal:$('syncTotal'),syncNew:$('syncNew'),syncArt:$('syncArt'),syncRemaining:$('syncRemaining'),metadataBlock:$('metadataBlock'),metadataTags:$('metadataTags'),gameDescription:$('gameDescription'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),confetti:$('confetti')};
+const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),syncSummary:$('syncSummary'),syncTotal:$('syncTotal'),syncNew:$('syncNew'),syncArt:$('syncArt'),syncRemaining:$('syncRemaining'),metadataBlock:$('metadataBlock'),metadataTags:$('metadataTags'),gameDescription:$('gameDescription'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),testBggArt:$('testBggArt'),refreshSelectedArt:$('refreshSelectedArt'),testCollectionSync:$('testCollectionSync'),clearAppCache:$('clearAppCache'),devOutput:$('devOutput'),confetti:$('confetti')};
 const ctx=el.wheel.getContext('2d');
 let user=null,householdId=null,games=[],eligible=[],tags=[],gameTagMap=new Map(),plays=[],passes=[],queue=[],current=null,rotation=0,spinning=false,activeFilterTags=new Set();
 
@@ -154,6 +168,37 @@ window.openGame=id=>{current=games.find(g=>g.id===id);showGame(current);document
 function renderHealth(){const owned=games.filter(g=>g.owned),played=owned.filter(g=>Number(g.num_plays)>0||plays.some(p=>p.game_id===g.id)),tagged=owned.filter(g=>(gameTagMap.get(g.id)||new Set()).size),recent=plays.filter(p=>Date.now()-new Date(p.played_at)<30*86400000).length;const playedP=owned.length?Math.round(played.length/owned.length*100):0,tagP=owned.length?Math.round(tagged.length/owned.length*100):0;const health=Math.round(playedP*.65+Math.min(100,recent*5)*.2+tagP*.15);el.healthScore.textContent=el.healthScoreMini.textContent=health+'%';el.playedPct.textContent=playedP+'%';el.recentPlays.textContent=recent;el.taggedPct.textContent=tagP+'%';el.healthFill.style.width=health+'%';const unplayed=owned.length-played.length;el.healthWarnings.innerHTML=`<div class="reason">${unplayed} games have no recorded play.</div><div class="reason">${owned.length-tagged.length} games have no household tags.</div><div class="reason">${owned.filter(g=>!g.max_play_time).length} games lack play-time data.</div>`;el.healthChallenge.innerHTML=unplayed?`<strong>Unplayed challenge:</strong><p class="muted" style="margin-top:8px">Play ${Math.min(5,unplayed)} unplayed games before your next collection purchase.</p>`:`<strong>Replay challenge:</strong><p class="muted" style="margin-top:8px">Revisit a favorite you have not logged recently.</p>`;const avg=owned.filter(g=>g.weight).reduce((a,g)=>a+Number(g.weight),0)/(owned.filter(g=>g.weight).length||1);el.statsDetail.innerHTML=`<div class="grid3"><div class="stat"><strong>${owned.length}</strong><span>Total owned</span></div><div class="stat"><strong>${avg.toFixed(2)}</strong><span>Average weight</span></div><div class="stat"><strong>${plays.length}</strong><span>App plays logged</span></div></div>`}
 function renderHistory(){const by=new Map(games.map(g=>[g.id,g.name]));el.playHistory.innerHTML=plays.length?plays.slice(0,100).map(p=>`<div class="history-item"><span>${esc(by.get(p.game_id)||'Game')}</span><span>${new Date(p.played_at).toLocaleDateString()}</span></div>`).join(''):'No plays logged.';el.passHistory.innerHTML=passes.length?passes.slice(0,100).map(p=>`<div class="history-item"><span>${esc(by.get(p.game_id)||'Game')}</span><span>${new Date(p.created_at).toLocaleDateString()}</span></div>`).join(''):'No passes yet.'}
 function renderManageTags(){el.manageTags.innerHTML=tags.map(t=>`<span class="tag">${esc(t.name)}</span>`).join('')}
+function devPrint(label,payload){
+  const stamp=new Date().toLocaleTimeString();
+  let text;
+  try{text=typeof payload==='string'?payload:JSON.stringify(payload,null,2)}catch{text=String(payload)}
+  el.devOutput.textContent=`[${stamp}] ${label}\n${text}`;
+}
+async function invokeArtworkTest(game){
+  if(!game)throw new Error('No game with a BGG ID is available to test.');
+  devPrint('Testing fetch-bgg-art…',{name:game.name,bggId:game.bgg_id,gameId:game.id,householdId});
+  const {data,error}=await sb.functions.invoke('fetch-bgg-art',{body:{bggId:game.bgg_id,gameId:game.id,householdId}});
+  if(error){devPrint('fetch-bgg-art error',{message:error.message,name:error.name,context:error.context??null});throw error;}
+  devPrint('fetch-bgg-art success',data);
+  if(data?.imageUrl||data?.thumbnailUrl){game.image_url=data.imageUrl||data.thumbnailUrl;game.thumbnail_url=data.thumbnailUrl||null;}
+  return data;
+}
+async function testBggArtwork(){
+  try{const game=games.find(g=>g.owned&&g.bgg_id);const data=await invokeArtworkTest(game);alert((data?.imageUrl||data?.thumbnailUrl)?`Artwork test succeeded for ${game.name}.`:'The Edge Function returned successfully, but no artwork URL was returned.');}
+  catch(error){alert(`Artwork test failed: ${error.message||error}`);}
+}
+async function refreshSelectedArtwork(){
+  try{const game=current||games.find(g=>g.owned&&g.bgg_id);const data=await invokeArtworkTest(game);if(current&&data&&(data.imageUrl||data.thumbnailUrl)){el.art.src=data.imageUrl||data.thumbnailUrl;el.art.style.display='block';}alert(`Artwork refreshed for ${game.name}.`);}
+  catch(error){alert(`Artwork refresh failed: ${error.message||error}`);}
+}
+async function testCollectionSync(){
+  const username=el.bggUsername.value.trim();if(!username){alert('Enter your BGG username first.');return;}
+  devPrint('Testing sync-bgg-collection…',{username,householdId,detailLimit:0});
+  try{const {data,error}=await sb.functions.invoke('sync-bgg-collection',{body:{username,householdId,detailLimit:0}});if(error){devPrint('sync-bgg-collection error',{message:error.message,name:error.name,context:error.context??null});alert(`Collection sync test failed: ${error.message}`);return;}devPrint('sync-bgg-collection success',data);alert(`Collection sync test succeeded. ${data?.total??0} owned games reported.`);}catch(error){devPrint('sync-bgg-collection exception',{message:error.message||String(error)});alert(`Collection sync test failed: ${error.message||error}`);}
+}
+async function clearAppCache(){
+  try{if('caches' in window){const keys=await caches.keys();await Promise.all(keys.map(k=>caches.delete(k)));}if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();await Promise.all(regs.map(r=>r.unregister()));}devPrint('Cache cleared','Browser caches and service worker registrations were cleared. Refresh the page now.');alert('App cache cleared. Refresh the page once.');}catch(error){devPrint('Cache clear failed',{message:error.message||String(error)});}
+}
 function confetti(){el.confetti.innerHTML='';el.confetti.classList.remove('hidden');for(let i=0;i<55;i++){const p=document.createElement('i');p.className='piece';p.style.left=Math.random()*100+'vw';p.style.background=['#f43f5e','#f59e0b','#22c55e','#38bdf8','#a78bfa'][i%5];p.style.setProperty('--drift',(Math.random()*240-120)+'px');el.confetti.appendChild(p)}setTimeout(()=>el.confetti.classList.add('hidden'),2200)}
 
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+b.dataset.tab).classList.remove('hidden')})
@@ -177,6 +222,10 @@ el.reloadDb.onclick=loadAll;el.syncBgg.onclick=async()=>{
   status(el.syncStatus,`BGG sync failed: ${error.message||error}`,'error');
  }finally{el.syncBgg.disabled=false}
 };
+el.testBggArt.onclick=testBggArtwork;
+el.refreshSelectedArt.onclick=refreshSelectedArtwork;
+el.testCollectionSync.onclick=testCollectionSync;
+el.clearAppCache.onclick=clearAppCache;
 el.art.onerror=()=>{el.art.style.display='none'};
 sb.auth.getSession().then(({data})=>{if(data.session)enterApp(data.session.user)});drawWheel();
 </script>
