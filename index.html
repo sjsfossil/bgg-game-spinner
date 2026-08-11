@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b1020">
-<title>The Howling Meeple Companion v10</title>
+<title>The Howling Meeple Companion v10.1</title>
 <link rel="manifest" href="manifest.webmanifest">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -31,12 +31,50 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 .score{font-size:2.4rem;font-weight:900;color:#c4b5fd} .reason{padding:7px 0;border-bottom:1px solid var(--line)} .positive{color:#86efac} .negative{color:#fca5a5}
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999} .piece{position:absolute;top:-30px;width:10px;height:18px;border-radius:2px;animation:fall 2s linear forwards} @keyframes fall{to{transform:translate3d(var(--drift),110vh,0) rotate(760deg);opacity:.1}}
 @media(max-width:720px){.grid2,.grid3,.grid4{grid-template-columns:1fr} .detail-grid{grid-template-columns:1fr 1fr} button,.button,label.file-label{width:100%}}
-</style><style>
-body{background:radial-gradient(circle at 20% 0%,#111b31 0,#08101f 38%,#050a13 100%);max-width:1540px}
-header{padding:18px 4px 14px}.brand{gap:16px}.brand-logo{width:76px;height:76px;border-radius:50%;padding:0;background:transparent;overflow:hidden}.brand-logo img{width:100%;height:100%;object-fit:cover;display:block}.brand h1{font-size:2rem}.subtitle{font-size:1rem}
-nav{background:linear-gradient(180deg,#111a2b,#0c1423);padding:8px 10px;border:1px solid #1b2941;border-radius:15px;gap:8px;position:sticky;top:0;z-index:20}nav button{background:transparent;border-color:transparent;color:#d7deea;padding:12px 17px}nav button.active{background:linear-gradient(135deg,#7c3aed,#a855f7);color:white}
-.card{border-color:#273752}.pick-hero{grid-template-columns:minmax(330px,.82fr) minmax(430px,1.18fr)}.pick-cover{min-height:510px;background:radial-gradient(circle at 50% 35%,#253555,#0a1220 72%)}.pick-cover img{max-height:610px;padding:22px}.pick-kicker{color:#f08aa4}.pick-title{font-size:2.7rem}.quick-stat{padding:13px 8px;background:#0a1323}.match-box{border-color:#9f4964;background:linear-gradient(135deg,rgba(96,32,57,.35),rgba(13,23,40,.95))}.match-title{color:#f08aa4}.decision-grid button{min-height:72px;font-size:1.05rem}#play{background:linear-gradient(135deg,#238636,#39a84b)}#needLearnMain{background:linear-gradient(135deg,#315fa8,#477bd0)}#pass{background:linear-gradient(135deg,#9a6814,#c68a1b)}.secondary-actions .button,.secondary-actions button{min-height:56px;display:flex;align-items:center;justify-content:center;text-align:center}#metadataBlock{background:#0b1423;border:1px solid #273752;border-radius:16px;padding:16px}
-@media(max-width:760px){.brand-logo{width:58px;height:58px}.brand h1{font-size:1.45rem}nav{position:static;overflow-x:auto;flex-wrap:nowrap}nav button{white-space:nowrap}.pick-hero{grid-template-columns:1fr}.pick-cover{min-height:360px}.pick-title{font-size:2rem}}
+</style>
+<style>
+body{background:radial-gradient(circle at 18% 0%,#111b31 0,#08101f 38%,#050a13 100%)}
+.shell{max-width:1500px}
+.brand{gap:16px}.brand-logo{width:82px;height:82px;border-radius:50%;overflow:hidden;flex:0 0 auto;box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.brand-logo img{width:100%;height:100%;object-fit:cover;display:block}
+.brand h1{font-size:2rem}
+.tabs{background:linear-gradient(180deg,#111a2b,#0c1423);padding:8px;border:1px solid #1b2941;border-radius:15px}
+.tab{background:transparent;border-color:transparent;color:#d8deea}.tab.active{background:transparent;color:#f08aa4;border-bottom:3px solid #f08aa4;border-radius:10px 10px 0 0}
+.reveal{background:linear-gradient(180deg,#111a2a,#0b1321);padding:18px}
+.reveal-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px}
+.reveal-main{min-width:0}
+.pick-kicker{color:#f08aa4;font-weight:900;letter-spacing:.08em;margin:0 0 12px}
+.pick-hero{display:grid;grid-template-columns:minmax(320px,.78fr) minmax(430px,1.22fr);gap:28px;align-items:stretch}
+.pick-cover{min-height:520px;background:radial-gradient(circle at 50% 35%,#253555,#0a1220 72%);border:1px solid #2a3955;border-radius:16px;display:grid;place-items:center;overflow:hidden;position:relative}
+.pick-cover img{width:100%;height:100%;max-height:620px;object-fit:contain;padding:16px;z-index:1}
+.pick-cover .placeholder{position:absolute;font-size:7rem;opacity:.35}
+.pick-info{display:flex;flex-direction:column;justify-content:center}
+.pick-title{font-size:2.65rem;line-height:1.05;margin:0}
+.pick-subtitle{font-size:1rem;color:var(--muted);font-weight:700;margin:9px 0 0}
+.quick-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:18px}
+.quick-stat{background:#0a1323;border:1px solid #293852;border-radius:14px;padding:13px 7px;text-align:center}
+.quick-stat strong{display:block;font-size:1.08rem}.quick-stat span{display:block;font-size:.69rem;color:var(--muted);margin-top:3px}
+.match-box{margin-top:18px;background:linear-gradient(135deg,rgba(93,31,55,.38),rgba(13,23,40,.95));border:1px solid #a34f69;border-radius:15px;padding:16px}
+.match-title{color:#f08aa4;font-weight:900;font-size:1.05rem;margin-bottom:8px}.match-copy{line-height:1.55}
+.learn-panel{margin-top:16px;background:#0b1423;border:1px solid #293852;border-radius:15px;padding:14px}
+.learn-status{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.learn-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:#273449;font-size:.76rem;font-weight:900}.learn-badge.available{background:#14532d}.learn-badge.learning{background:#78350f}
+.decision-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:18px}
+.decision-grid button{min-height:82px;font-size:1.08rem}
+#play{background:linear-gradient(135deg,#238636,#39a84b)}#needLearnMain{background:linear-gradient(135deg,#315fa8,#477bd0)}#pass{background:linear-gradient(135deg,#9a6814,#c68a1b)}
+.secondary-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+.secondary-actions .button,.secondary-actions button{min-height:58px;display:flex;align-items:center;justify-content:center}
+.metadata-card,.mini-card{background:#0b1423;border:1px solid #293852;border-radius:15px;padding:16px;margin-top:16px}
+.description-box{margin-top:12px;line-height:1.5;max-height:220px;overflow:auto}
+.reveal-lower{margin-top:0}.score{color:#f08aa4}
+.spin-again{width:100%;margin-top:12px;border-color:#a34f69;color:#f08aa4}
+.reveal-sidebar{display:flex;flex-direction:column;gap:12px}
+.side-panel{background:#0c1524;border:1px solid #293852;border-radius:15px;padding:16px}
+.side-label{font-size:.76rem;font-weight:900;color:#7ea6ff;letter-spacing:.04em}
+.side-value{font-size:1rem;font-weight:800;margin-top:8px}
+.side-stats{display:grid;gap:14px}.side-stats div{border-bottom:1px solid #25344e;padding-bottom:12px}.side-stats div:last-child{border-bottom:0;padding-bottom:0}.side-stats strong{display:block;font-size:1.65rem}.side-stats span{font-size:.78rem;color:var(--muted)}
+@media(max-width:1050px){.reveal-layout{grid-template-columns:1fr}.reveal-sidebar{display:grid;grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.brand-logo{width:60px;height:60px}.brand h1{font-size:1.45rem}.pick-hero{grid-template-columns:1fr}.pick-cover{min-height:360px}.pick-title{font-size:2rem}.quick-stats{grid-template-columns:repeat(2,1fr)}.decision-grid,.secondary-actions,.reveal-sidebar{grid-template-columns:1fr}.tabs{overflow-x:auto;flex-wrap:nowrap}.tab{white-space:nowrap}}
 </style>
 <style>
 .pick-hero{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(320px,1.15fr);gap:20px;align-items:stretch}
@@ -63,7 +101,7 @@ nav{background:linear-gradient(180deg,#111a2b,#0c1423);padding:8px 10px;border:1
 </head>
 <body>
 <main class="shell">
-<header class="brand"><div class="brand-icon">🐺</div><div><h1>The Howling Meeple Companion</h1><p class="muted">Shared game-night planning for your household.</p></div></header>
+<header class="brand"><div class="brand-logo"><img src="logo.png" alt="The Howling Meeple logo"></div><div><h1>The Howling Meeple Companion</h1><p class="muted">Shared game-night planning for your household.</p></div></header>
 
 <section id="authCard" class="card"><h2>Sign in</h2><div class="grid2"><label class="field"><span>Email</span><input id="email" type="email"></label><label class="field"><span>Password</span><input id="password" type="password"></label></div><button id="signIn" class="primary" style="width:100%;margin-top:12px">Sign In</button><div id="authStatus" class="status"></div></section>
 
@@ -100,31 +138,105 @@ nav{background:linear-gradient(180deg,#111a2b,#0c1423);padding:8px 10px;border:1
 <button id="spin" class="primary" style="width:100%;padding:16px" disabled>CHOOSE TONIGHT'S GAME</button>
 </div>
 <div id="result" class="card reveal hidden">
-<div class="reveal-body">
-<div class="pick-hero">
-<div class="pick-cover"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
-<div class="pick-info">
-<div class="pick-kicker">🐺 Tonight's Pick</div>
-<h2 id="gameName" class="pick-title"></h2><div id="gameSubtitle" class="pick-subtitle"></div>
-<div class="quick-stats">
-<div class="quick-stat"><strong id="gamePlayers">—</strong><span>Players</span></div>
-<div class="quick-stat"><strong id="gameTime">—</strong><span>Time</span></div>
-<div class="quick-stat"><strong id="gameRating">—</strong><span>BGG</span></div>
-<div class="quick-stat"><strong id="gameWeight">—</strong><span>Weight</span></div>
-<div class="quick-stat"><strong id="gamePlayCount">—</strong><span>BGG Plays</span></div>
+<div class="reveal-layout">
+  <div class="reveal-main">
+    <div class="pick-kicker">✦ TONIGHT'S PICK</div>
+    <div class="pick-hero">
+      <div class="pick-cover"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
+      <div class="pick-info">
+        <h2 id="gameName" class="pick-title"></h2>
+        <div id="gameSubtitle" class="pick-subtitle"></div>
+
+        <div class="quick-stats">
+          <div class="quick-stat"><strong id="gameRating">—</strong><span>BGG Rating</span></div>
+          <div class="quick-stat"><strong id="gameWeight">—</strong><span>Weight</span></div>
+          <div class="quick-stat"><strong id="gamePlayCount">—</strong><span>BGG Plays</span></div>
+          <div class="quick-stat"><strong id="gamePlayers">—</strong><span>Players</span></div>
+          <div class="quick-stat"><strong id="gameTime">—</strong><span>Time</span></div>
+        </div>
+
+        <div class="match-box">
+          <div class="match-title">🐺 Why this game?</div>
+          <div id="matchExplanation" class="match-copy"></div>
+        </div>
+
+        <div class="learn-panel">
+          <div class="learn-status">
+            <div>
+              <strong>Learn & Play</strong>
+              <div class="small muted">Track Dized availability and learning status.</div>
+            </div>
+            <div id="learningBadges" class="row"></div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <button id="markDized">Mark Dized Available</button>
+            <button id="needLearn">Need to Learn</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision-grid">
+      <button id="play" class="play">✓ PLAY IT</button>
+      <button id="needLearnMain">📚 NEED TO LEARN</button>
+      <button id="pass" class="pass">◷ NOT TONIGHT</button>
+    </div>
+
+    <div class="secondary-actions">
+      <a id="dizedLink" class="button" target="_blank">Dized Tutorial</a>
+      <a id="youtubeLink" class="button" target="_blank">YouTube Tutorial</a>
+      <a id="bggLink" class="button" target="_blank">BGG Page</a>
+      <button id="addQueue">Add to Queue</button>
+    </div>
+
+    <div id="metadataBlock" class="hidden metadata-card">
+      <h3>About the Game</h3>
+      <div id="metadataTags" class="tag-grid"></div>
+      <div id="gameDescription" class="description-box"></div>
+    </div>
+
+    <div class="grid2 reveal-lower">
+      <div class="card mini-card"><h3>Howl Score</h3><div id="howlScore" class="score">0</div></div>
+      <div class="card mini-card"><h3>Score Details</h3><div id="scoreReasons"></div></div>
+    </div>
+
+    <div class="card mini-card">
+      <h3>Household Tags</h3>
+      <div id="gameTags" class="tag-grid"></div>
+    </div>
+
+    <div class="card mini-card">
+      <h3>Your BGG Comments</h3>
+      <div id="gameComments"></div>
+    </div>
+
+    <button id="spinAgain" class="spin-again">↻ Spin Again</button>
+  </div>
+
+  <aside class="reveal-sidebar">
+    <div class="side-panel">
+      <div class="side-label">👥 PLAYING WITH</div>
+      <div class="side-value" id="sidePlayers">Any Players</div>
+    </div>
+    <div class="side-panel">
+      <div class="side-label">◷ AVAILABLE TIME</div>
+      <div class="side-value" id="sideTime">Any Time</div>
+    </div>
+    <div class="side-panel">
+      <div class="side-label">🏷 HOUSEHOLD TAG FILTERS</div>
+      <div class="side-value" id="sideTags">All Tags</div>
+    </div>
+    <div class="side-panel">
+      <div class="side-label">DIZED TUTORIALS ONLY</div>
+      <div class="side-value" id="sideDized">Off</div>
+    </div>
+    <div class="side-panel side-stats">
+      <div><strong id="sideOwned">0</strong><span>Games in Collection</span></div>
+      <div><strong id="sideEligible">0</strong><span>Eligible Tonight</span></div>
+    </div>
+  </aside>
 </div>
-<div class="match-box"><div class="match-title">🐺 Why this game?</div><div id="matchExplanation" class="match-copy"></div></div>
-<div class="learn-panel"><div class="learn-status"><div><strong>Learn & Play</strong><div class="small muted">Track Dized availability and games you still need to learn.</div></div><div id="learningBadges" class="row"></div></div>
-<div class="grid2" style="margin-top:12px"><button id="markDized">Mark Dized Available</button><button id="needLearn">Need to Learn</button></div></div>
-</div></div>
-<div id="metadataBlock" class="hidden" style="margin-top:18px"><h3>BGG Details</h3><div id="metadataTags" class="tag-grid"></div><div id="gameDescription" class="card" style="margin:12px 0;max-height:220px;overflow:auto"></div></div>
-<div class="grid2" style="margin-top:16px"><div><h3>Howl Score</h3><div id="howlScore" class="score">0</div></div><div><h3>Score details</h3><div id="scoreReasons"></div></div></div>
-<h3 style="margin-top:16px">Household Tags</h3><div id="gameTags" class="tag-grid"></div>
-<h3 style="margin-top:16px">Your BGG Comments</h3><div id="gameComments" class="card" style="margin:8px 0"></div>
-<div class="decision-grid"><button id="play" class="play">🎲 PLAY IT</button><button id="needLearnMain">📚 NEED TO LEARN</button><button id="pass" class="pass">↻ NOT TONIGHT</button></div>
-<div class="secondary-actions"><a id="dizedLink" class="button" target="_blank">Open / Search Dized</a><a id="youtubeLink" class="button" target="_blank">YouTube Tutorial</a><a id="bggLink" class="button" target="_blank">View on BGG</a><button id="addQueue">Add to Queue</button></div>
-<button id="spinAgain" style="width:100%;margin-top:10px">Choose Another Game</button>
-</div></div>
+</div>
 </section>
 
 <section id="tab-queue" class="tab-panel hidden"><div class="card"><div class="row between"><h2>Game Night Queue</h2><button id="clearQueue" class="danger">Clear Queue</button></div><div id="queueList" class="muted">No games queued.</div></div></section>
@@ -166,7 +278,7 @@ nav{background:linear-gradient(180deg,#111a2b,#0c1423);padding:8px 10px;border:1
 <script>
 const SUPABASE_URL="https://yivnzvgexutjacljqijr.supabase.co",SUPABASE_KEY="sb_publishable_lzEc-Mqaomi1jDtaFLst7Q_PcLvywrt";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=id=>document.getElementById(id);
-const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),dizedOnly:$('dizedOnly'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameSubtitle:$('gameSubtitle'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),gamePlayCount:$('gamePlayCount'),matchExplanation:$('matchExplanation'),learningBadges:$('learningBadges'),markDized:$('markDized'),needLearn:$('needLearn'),needLearnMain:$('needLearnMain'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),syncSummary:$('syncSummary'),syncTotal:$('syncTotal'),syncNew:$('syncNew'),syncArt:$('syncArt'),syncRemaining:$('syncRemaining'),metadataBlock:$('metadataBlock'),metadataTags:$('metadataTags'),gameDescription:$('gameDescription'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),testBggArt:$('testBggArt'),refreshSelectedArt:$('refreshSelectedArt'),testCollectionSync:$('testCollectionSync'),clearAppCache:$('clearAppCache'),devOutput:$('devOutput'),confetti:$('confetti')};
+const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),dizedOnly:$('dizedOnly'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameSubtitle:$('gameSubtitle'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),gamePlayCount:$('gamePlayCount'),matchExplanation:$('matchExplanation'),learningBadges:$('learningBadges'),markDized:$('markDized'),needLearn:$('needLearn'),needLearnMain:$('needLearnMain'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),syncSummary:$('syncSummary'),syncTotal:$('syncTotal'),syncNew:$('syncNew'),syncArt:$('syncArt'),syncRemaining:$('syncRemaining'),metadataBlock:$('metadataBlock'),metadataTags:$('metadataTags'),gameDescription:$('gameDescription'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),testBggArt:$('testBggArt'),refreshSelectedArt:$('refreshSelectedArt'),testCollectionSync:$('testCollectionSync'),clearAppCache:$('clearAppCache'),devOutput:$('devOutput'),sidePlayers:$('sidePlayers'),sideTime:$('sideTime'),sideTags:$('sideTags'),sideDized:$('sideDized'),sideOwned:$('sideOwned'),sideEligible:$('sideEligible'),confetti:$('confetti')};
 const ctx=el.wheel.getContext('2d');
 let user=null,householdId=null,games=[],eligible=[],tags=[],gameTagMap=new Map(),plays=[],passes=[],queue=[],current=null,rotation=0,spinning=false,activeFilterTags=new Set();
 
@@ -207,7 +319,7 @@ async function toggleDizedForCurrent(){if(!current)return;await setNamedTag(curr
 async function toggleLearningForCurrent(){if(!current)return;const on=!gameHasNamedTag(current.id,'Need to Learn');await setNamedTag(current.id,'Need to Learn',on);renderGameTags(current);renderLearningState(current);if(on)alert(`${current.name} was added to Need to Learn.`)}
 function gameLastPlayed(id){const x=plays.find(p=>p.game_id===id);return x?new Date(x.played_at):null}
 function scoreGame(g){let score=0,reasons=[];if(Number(g.num_plays)===0){score+=25;reasons.push(['+25','Never played'])}const last=gameLastPlayed(g.id);if(last){const days=(Date.now()-last)/86400000;if(days<14){score-=30;reasons.push(['-30','Played recently'])}else if(days>180){score+=15;reasons.push(['+15','Not played in 6+ months'])}}else{score+=10;reasons.push(['+10','No app play logged'])}if(g.average_rating){const pts=Math.round((Number(g.average_rating)-6)*5);score+=pts;reasons.push([`${pts>=0?'+':''}${pts}`,'BGG rating'])}const ts=gameTagMap.get(g.id)||new Set();if(ts.size){score+=Math.min(20,ts.size*5);reasons.push([`+${Math.min(20,ts.size*5)}`,'Household tags'])}if(passes.some(p=>p.game_id===g.id&&Date.now()-new Date(p.created_at)<7*86400000)){score-=10;reasons.push(['-10','Passed recently'])}return{score,reasons}}
-function applyFilters(){const pc=num(el.players.value),tm=num(el.time.value);eligible=games.filter(g=>g.owned&&!String(g.item_type).includes('expansion')&&(el.scope.value==='all'||Number(g.num_plays)===0)&&(pc==null||(g.min_players<=pc&&g.max_players>=pc))&&(tm==null||(g.max_play_time&&g.max_play_time<=tm))&&([...activeFilterTags].every(t=>(gameTagMap.get(g.id)||new Set()).has(t)))&&(!el.dizedOnly.checked||gameHasNamedTag(g.id,'Dized Tutorial')));el.ownedCount.textContent=games.filter(g=>g.owned).length;el.eligibleCount.textContent=eligible.length;el.unplayedCount.textContent=games.filter(g=>g.owned&&Number(g.num_plays)===0).length;el.spin.disabled=!eligible.length;drawWheel();renderHealth()}
+function applyFilters(){const pc=num(el.players.value),tm=num(el.time.value);eligible=games.filter(g=>g.owned&&!String(g.item_type).includes('expansion')&&(el.scope.value==='all'||Number(g.num_plays)===0)&&(pc==null||(g.min_players<=pc&&g.max_players>=pc))&&(tm==null||(g.max_play_time&&g.max_play_time<=tm))&&([...activeFilterTags].every(t=>(gameTagMap.get(g.id)||new Set()).has(t)))&&(!el.dizedOnly.checked||gameHasNamedTag(g.id,'Dized Tutorial')));el.ownedCount.textContent=games.filter(g=>g.owned).length;el.eligibleCount.textContent=eligible.length;el.sideOwned.textContent=games.filter(g=>g.owned).length;el.sideEligible.textContent=eligible.length;el.sidePlayers.textContent=num(el.players.value)?`${num(el.players.value)} Player${num(el.players.value)===1?'':'s'}`:'Any Players';el.sideTime.textContent=num(el.time.value)?`≤ ${num(el.time.value)} Minutes`:'Any Time';el.sideDized.textContent=el.dizedOnly.checked?'On':'Off';el.sideTags.textContent=activeFilterTags.size?`${activeFilterTags.size} Tag Filter${activeFilterTags.size===1?'':'s'}`:'All Tags';el.unplayedCount.textContent=games.filter(g=>g.owned&&Number(g.num_plays)===0).length;el.spin.disabled=!eligible.length;drawWheel();renderHealth()}
 function chooseGame(){if(el.mode.value==='random')return eligible[Math.floor(Math.random()*eligible.length)];const ranked=[...eligible].map(g=>({g,...scoreGame(g)}));if(el.mode.value==='highest')ranked.sort((a,b)=>(b.g.average_rating||0)-(a.g.average_rating||0));else if(el.mode.value==='overdue')ranked.sort((a,b)=>(gameLastPlayed(a.g.id)?.getTime()||0)-(gameLastPlayed(b.g.id)?.getTime()||0));else ranked.sort((a,b)=>b.score-a.score);const pool=ranked.slice(0,Math.min(10,ranked.length));return pool[Math.floor(Math.random()*pool.length)].g}
 function drawWheel(){const w=620,c=310,r=286;ctx.clearRect(0,0,w,w);if(!eligible.length){ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(c,c,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cbd5e1';ctx.font='700 28px sans-serif';ctx.textAlign='center';ctx.fillText('No games match',c,c);return}const n=18,a=Math.PI*2/n;for(let i=0;i<n;i++){const s=rotation+i*a,h=(262+i*23)%360,g=ctx.createRadialGradient(c,c,20,c,c,r);g.addColorStop(0,`hsl(${h} 55% 28%)`);g.addColorStop(1,`hsl(${h} 72% 43%)`);ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,s,s+a);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.18)';ctx.stroke()}ctx.beginPath();ctx.arc(c,c,65,0,Math.PI*2);ctx.fillStyle='#17102e';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='38px sans-serif';ctx.textAlign='center';ctx.fillText('🐺',c,c+13)}
 function spin(){if(spinning||!eligible.length)return;spinning=true;el.spin.disabled=true;const start=rotation,end=start+(6+Math.random()*4)*Math.PI*2,t0=performance.now();function f(now){const p=Math.min((now-t0)/3000,1),e=1-Math.pow(1-p,4);rotation=start+(end-start)*e;drawWheel();if(p<1)requestAnimationFrame(f);else{spinning=false;el.spin.disabled=false;current=chooseGame();showGame(current)}}requestAnimationFrame(f)}
