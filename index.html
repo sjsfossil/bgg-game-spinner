@@ -32,6 +32,28 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:9999} .piece{position:absolute;top:-30px;width:10px;height:18px;border-radius:2px;animation:fall 2s linear forwards} @keyframes fall{to{transform:translate3d(var(--drift),110vh,0) rotate(760deg);opacity:.1}}
 @media(max-width:720px){.grid2,.grid3,.grid4{grid-template-columns:1fr} .detail-grid{grid-template-columns:1fr 1fr} button,.button,label.file-label{width:100%}}
 </style>
+<style>
+.pick-hero{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(320px,1.15fr);gap:20px;align-items:stretch}
+.pick-cover{background:radial-gradient(circle,#283758,#0c1424);border-radius:18px;min-height:420px;display:grid;place-items:center;overflow:hidden;position:relative;border:1px solid var(--line)}
+.pick-cover img{width:100%;height:100%;max-height:520px;object-fit:contain;padding:18px;z-index:1}
+.pick-cover .placeholder{font-size:7rem}.pick-info{display:flex;flex-direction:column;justify-content:center}
+.pick-kicker{text-transform:uppercase;letter-spacing:.16em;color:#c4b5fd;font-size:.75rem;font-weight:900;margin-bottom:8px}
+.pick-title{font-size:2.35rem;line-height:1.06;margin:0}.pick-subtitle{color:var(--muted);font-weight:700;margin-top:8px}
+.match-box{background:linear-gradient(135deg,rgba(76,29,149,.42),rgba(13,23,40,.92));border:1px solid rgba(167,139,250,.38);border-radius:16px;padding:15px;margin-top:14px}
+.match-title{font-weight:900;margin-bottom:7px}.match-copy{line-height:1.5;color:#e5e7eb}
+.quick-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px}
+.quick-stat{background:#0d1728;border:1px solid var(--line);border-radius:14px;padding:10px 7px;text-align:center}
+.quick-stat strong{display:block}.quick-stat span{display:block;color:var(--muted);font-size:.7rem;margin-top:2px}
+.learn-panel{margin-top:16px;background:#0d1728;border:1px solid var(--line);border-radius:16px;padding:14px}
+.learn-status{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.learn-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#273449;font-size:.78rem;font-weight:900}
+.learn-badge.available{background:#14532d;color:#dcfce7}.learn-badge.learning{background:#78350f;color:#fef3c7}
+.decision-grid{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:10px;margin-top:14px}
+.secondary-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:10px}
+.filter-switch{display:flex;align-items:center;gap:10px;background:#0d1728;border:1px solid var(--line);border-radius:13px;padding:11px 12px}
+.filter-switch input{width:auto;transform:scale(1.25)}.mode-note{font-size:.8rem;color:var(--muted);margin-top:7px}
+@media(max-width:760px){.pick-hero{grid-template-columns:1fr}.pick-cover{min-height:320px}.pick-title{font-size:1.9rem}.quick-stats{grid-template-columns:repeat(2,1fr)}.decision-grid,.secondary-actions{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <main class="shell">
@@ -61,6 +83,7 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 <label class="field"><span>Players</span><input id="players" type="number" min="1" placeholder="Any"></label>
 <label class="field"><span>Maximum time</span><select id="time"><option value="">Any</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option><option value="90">90 min</option><option value="120">2 hours</option><option value="180">3 hours</option></select></label>
 </div>
+<div class="filter-switch" style="margin-top:12px"><input id="dizedOnly" type="checkbox"><label for="dizedOnly"><strong>Dized tutorials only</strong><div class="mode-note">Only include games you have confirmed have a Dized tutorial.</div></label></div>
 <div class="tag-grid" id="filterTags" style="margin-top:12px"></div>
 </div>
 <div class="grid4">
@@ -71,15 +94,30 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 <button id="spin" class="primary" style="width:100%;padding:16px" disabled>CHOOSE TONIGHT'S GAME</button>
 </div>
 <div id="result" class="card reveal hidden">
-<div class="art-wrap"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
 <div class="reveal-body">
-<h2 id="gameName" class="game-title"></h2><div id="gameYear" class="game-year"></div>
-<div class="detail-grid"><div class="detail"><strong id="gamePlayers">—</strong><span>Players</span></div><div class="detail"><strong id="gameTime">—</strong><span>Time</span></div><div class="detail"><strong id="gameWeight">—</strong><span>Weight</span></div><div class="detail"><strong id="gameRating">—</strong><span>BGG rating</span></div></div><div id="metadataBlock" class="hidden"><h3>BGG details</h3><div id="metadataTags" class="tag-grid"></div><div id="gameDescription" class="card" style="margin:12px 0;max-height:220px;overflow:auto"></div></div>
-<div class="grid2"><div><h3>Howl Score</h3><div id="howlScore" class="score">0</div></div><div><h3>Why this game?</h3><div id="scoreReasons"></div></div></div>
-<h3 style="margin-top:16px">Household tags</h3><div id="gameTags" class="tag-grid"></div>
-<h3 style="margin-top:16px">Your BGG comments</h3><div id="gameComments" class="card" style="margin:8px 0"></div>
-<div class="grid2"><a id="bggLink" class="button" target="_blank">View on BGG</a><a id="dizedLink" class="button" target="_blank">Search Dized</a><a id="youtubeLink" class="button" target="_blank">YouTube Tutorial</a><button id="addQueue">Add to Queue</button></div>
-<div class="grid3" style="margin-top:10px"><button id="play" class="play">Log Play</button><button id="pass" class="pass">Pass</button><button id="spinAgain">Choose Again</button></div>
+<div class="pick-hero">
+<div class="pick-cover"><div class="placeholder">🎲</div><img id="art" alt="Game artwork"></div>
+<div class="pick-info">
+<div class="pick-kicker">🐺 Tonight's Pick</div>
+<h2 id="gameName" class="pick-title"></h2><div id="gameSubtitle" class="pick-subtitle"></div>
+<div class="quick-stats">
+<div class="quick-stat"><strong id="gamePlayers">—</strong><span>Players</span></div>
+<div class="quick-stat"><strong id="gameTime">—</strong><span>Time</span></div>
+<div class="quick-stat"><strong id="gameRating">—</strong><span>BGG</span></div>
+<div class="quick-stat"><strong id="gameWeight">—</strong><span>Weight</span></div>
+<div class="quick-stat"><strong id="gamePlayCount">—</strong><span>BGG Plays</span></div>
+</div>
+<div class="match-box"><div class="match-title">🐺 Why this game?</div><div id="matchExplanation" class="match-copy"></div></div>
+<div class="learn-panel"><div class="learn-status"><div><strong>Learn & Play</strong><div class="small muted">Track Dized availability and games you still need to learn.</div></div><div id="learningBadges" class="row"></div></div>
+<div class="grid2" style="margin-top:12px"><button id="markDized">Mark Dized Available</button><button id="needLearn">Need to Learn</button></div></div>
+</div></div>
+<div id="metadataBlock" class="hidden" style="margin-top:18px"><h3>BGG Details</h3><div id="metadataTags" class="tag-grid"></div><div id="gameDescription" class="card" style="margin:12px 0;max-height:220px;overflow:auto"></div></div>
+<div class="grid2" style="margin-top:16px"><div><h3>Howl Score</h3><div id="howlScore" class="score">0</div></div><div><h3>Score details</h3><div id="scoreReasons"></div></div></div>
+<h3 style="margin-top:16px">Household Tags</h3><div id="gameTags" class="tag-grid"></div>
+<h3 style="margin-top:16px">Your BGG Comments</h3><div id="gameComments" class="card" style="margin:8px 0"></div>
+<div class="decision-grid"><button id="play" class="play">🎲 PLAY IT</button><button id="needLearnMain">📚 NEED TO LEARN</button><button id="pass" class="pass">↻ NOT TONIGHT</button></div>
+<div class="secondary-actions"><a id="dizedLink" class="button" target="_blank">Open / Search Dized</a><a id="youtubeLink" class="button" target="_blank">YouTube Tutorial</a><a id="bggLink" class="button" target="_blank">View on BGG</a><button id="addQueue">Add to Queue</button></div>
+<button id="spinAgain" style="width:100%;margin-top:10px">Choose Another Game</button>
 </div></div>
 </section>
 
@@ -122,7 +160,7 @@ input,select,textarea{width:100%;background:#0d1728;color:var(--text);border:1px
 <script>
 const SUPABASE_URL="https://yivnzvgexutjacljqijr.supabase.co",SUPABASE_KEY="sb_publishable_lzEc-Mqaomi1jDtaFLst7Q_PcLvywrt";
 const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY),$=id=>document.getElementById(id);
-const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameYear:$('gameYear'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),syncSummary:$('syncSummary'),syncTotal:$('syncTotal'),syncNew:$('syncNew'),syncArt:$('syncArt'),syncRemaining:$('syncRemaining'),metadataBlock:$('metadataBlock'),metadataTags:$('metadataTags'),gameDescription:$('gameDescription'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),testBggArt:$('testBggArt'),refreshSelectedArt:$('refreshSelectedArt'),testCollectionSync:$('testCollectionSync'),clearAppCache:$('clearAppCache'),devOutput:$('devOutput'),confetti:$('confetti')};
+const el={authCard:$('authCard'),app:$('app'),email:$('email'),password:$('password'),signIn:$('signIn'),signOut:$('signOut'),authStatus:$('authStatus'),accountEmail:$('accountEmail'),mode:$('mode'),scope:$('scope'),players:$('players'),time:$('time'),dizedOnly:$('dizedOnly'),filterTags:$('filterTags'),ownedCount:$('ownedCount'),eligibleCount:$('eligibleCount'),unplayedCount:$('unplayedCount'),healthScoreMini:$('healthScoreMini'),wheel:$('wheel'),spin:$('spin'),result:$('result'),art:$('art'),gameName:$('gameName'),gameSubtitle:$('gameSubtitle'),gamePlayers:$('gamePlayers'),gameTime:$('gameTime'),gameWeight:$('gameWeight'),gameRating:$('gameRating'),gamePlayCount:$('gamePlayCount'),matchExplanation:$('matchExplanation'),learningBadges:$('learningBadges'),markDized:$('markDized'),needLearn:$('needLearn'),needLearnMain:$('needLearnMain'),howlScore:$('howlScore'),scoreReasons:$('scoreReasons'),gameTags:$('gameTags'),gameComments:$('gameComments'),bggLink:$('bggLink'),dizedLink:$('dizedLink'),youtubeLink:$('youtubeLink'),addQueue:$('addQueue'),play:$('play'),pass:$('pass'),spinAgain:$('spinAgain'),queueList:$('queueList'),clearQueue:$('clearQueue'),collectionSearch:$('collectionSearch'),collectionList:$('collectionList'),healthScore:$('healthScore'),playedPct:$('playedPct'),recentPlays:$('recentPlays'),taggedPct:$('taggedPct'),healthFill:$('healthFill'),healthWarnings:$('healthWarnings'),healthChallenge:$('healthChallenge'),statsDetail:$('statsDetail'),playHistory:$('playHistory'),passHistory:$('passHistory'),bggUsername:$('bggUsername'),syncBgg:$('syncBgg'),csv:$('csv'),reloadDb:$('reloadDb'),syncStatus:$('syncStatus'),syncSummary:$('syncSummary'),syncTotal:$('syncTotal'),syncNew:$('syncNew'),syncArt:$('syncArt'),syncRemaining:$('syncRemaining'),metadataBlock:$('metadataBlock'),metadataTags:$('metadataTags'),gameDescription:$('gameDescription'),newTagName:$('newTagName'),addTag:$('addTag'),manageTags:$('manageTags'),testBggArt:$('testBggArt'),refreshSelectedArt:$('refreshSelectedArt'),testCollectionSync:$('testCollectionSync'),clearAppCache:$('clearAppCache'),devOutput:$('devOutput'),confetti:$('confetti')};
 const ctx=el.wheel.getContext('2d');
 let user=null,householdId=null,games=[],eligible=[],tags=[],gameTagMap=new Map(),plays=[],passes=[],queue=[],current=null,rotation=0,spinning=false,activeFilterTags=new Set();
 
@@ -133,18 +171,49 @@ function csvGame(r){return{user_id:user.id,household_id:householdId,bgg_id:num(r
 async function enterApp(u){user=u;const{data:m,error}=await sb.from('household_members').select('household_id').eq('user_id',u.id).limit(1).maybeSingle();if(error||!m){status(el.authStatus,'This account is not linked to a household.','error');return}householdId=m.household_id;el.authCard.classList.add('hidden');el.app.classList.remove('hidden');el.accountEmail.textContent=u.email;await loadAll()}
 async function loadAll(){status(el.syncStatus,'Loading household data…');const [g,t,gt,p,d,q,s]=await Promise.all([sb.from('games').select('*').eq('household_id',householdId).order('name'),sb.from('household_tags').select('*').eq('household_id',householdId).order('name'),sb.from('game_tags').select('*').eq('household_id',householdId),sb.from('game_plays').select('*').eq('household_id',householdId).order('played_at',{ascending:false}),sb.from('game_decisions').select('*').eq('household_id',householdId).order('created_at',{ascending:false}),sb.from('game_night_queue').select('*').eq('household_id',householdId).order('position'),sb.from('household_settings').select('*').eq('household_id',householdId).maybeSingle()]);if(g.error)return status(el.syncStatus,g.error.message,'error');games=g.data||[];tags=t.data||[];gameTagMap=new Map();for(const x of gt.data||[]){if(!gameTagMap.has(x.game_id))gameTagMap.set(x.game_id,new Set());gameTagMap.get(x.game_id).add(x.tag_id)}plays=p.data||[];passes=(d.data||[]).filter(x=>x.decision==='pass');queue=q.data||[];if(s.data){el.scope.value=s.data.game_scope||'unplayed';el.players.value=s.data.player_count||'';el.time.value=s.data.available_minutes||'';el.bggUsername.value=s.data.bgg_username||'TheHowlingMeeple'}status(el.syncStatus,`Loaded ${games.length} games.`,'ok');renderAll()}
 function renderAll(){applyFilters();renderTags();renderQueue();renderCollection();renderHealth();renderHistory();renderManageTags()}
+
+function tagByName(name){return tags.find(t=>String(t.name).toLowerCase()===name.toLowerCase())||null}
+function gameHasNamedTag(gameId,name){const tag=tagByName(name);return !!tag&&(gameTagMap.get(gameId)||new Set()).has(tag.id)}
+async function setNamedTag(gameId,name,on=true){
+ const tag=tagByName(name);if(!tag)throw new Error(`Household tag "${name}" is missing. Run the v9.2 SQL once.`);
+ const set=gameTagMap.get(gameId)||new Set();
+ if(on&&!set.has(tag.id)){const {error}=await sb.from('game_tags').insert({household_id:householdId,game_id:gameId,tag_id:tag.id,created_by:user.id});if(error)throw error;set.add(tag.id)}
+ else if(!on&&set.has(tag.id)){const {error}=await sb.from('game_tags').delete().eq('household_id',householdId).eq('game_id',gameId).eq('tag_id',tag.id);if(error)throw error;set.delete(tag.id)}
+ gameTagMap.set(gameId,set)
+}
+function selectionExplanation(g){
+ const p=[],pc=num(el.players.value),tm=num(el.time.value);
+ if(pc!=null)p.push(`fits ${pc} player${pc===1?'':'s'}`);if(tm!=null&&g.max_play_time)p.push(`fits your ${tm}-minute limit`);
+ if(el.scope.value==='unplayed'&&Number(g.num_plays)===0)p.push('has no logged BGG plays');if(el.dizedOnly.checked)p.push('has a confirmed Dized tutorial');
+ const last=gameLastPlayed(g.id),days=last?Math.floor((Date.now()-last)/86400000):null;
+ if(el.mode.value==='highest')p.push(`is one of your highest-rated matches at ${Number(g.average_rating||0).toFixed(1)} on BGG`);
+ else if(el.mode.value==='overdue')p.push(last?`has not been logged here for ${days} days`:'has no app play logged yet');
+ else if(el.mode.value==='recommended')p.push('ranked highly by its Howl Score');
+ else p.push(`was randomly selected from ${eligible.length} matching game${eligible.length===1?'':'s'}`);
+ return p.length?p.map((x,i)=>i?x:x.charAt(0).toUpperCase()+x.slice(1)).join(' • '):'Selected from your eligible collection.'
+}
+function renderLearningState(g){
+ const d=gameHasNamedTag(g.id,'Dized Tutorial'),l=gameHasNamedTag(g.id,'Need to Learn');
+ el.learningBadges.innerHTML=`${d?'<span class="learn-badge available">✓ Dized available</span>':'<span class="learn-badge">Dized not confirmed</span>'}${l?'<span class="learn-badge learning">📚 Need to learn</span>':''}`;
+ el.markDized.textContent=d?'Remove Dized Mark':'Mark Dized Available';el.needLearn.textContent=l?'Mark as Learned':'Need to Learn';el.needLearnMain.textContent=l?'✓ MARK AS LEARNED':'📚 NEED TO LEARN'
+}
+async function toggleDizedForCurrent(){if(!current)return;await setNamedTag(current.id,'Dized Tutorial',!gameHasNamedTag(current.id,'Dized Tutorial'));renderGameTags(current);renderLearningState(current);applyFilters()}
+async function toggleLearningForCurrent(){if(!current)return;const on=!gameHasNamedTag(current.id,'Need to Learn');await setNamedTag(current.id,'Need to Learn',on);renderGameTags(current);renderLearningState(current);if(on)alert(`${current.name} was added to Need to Learn.`)}
 function gameLastPlayed(id){const x=plays.find(p=>p.game_id===id);return x?new Date(x.played_at):null}
 function scoreGame(g){let score=0,reasons=[];if(Number(g.num_plays)===0){score+=25;reasons.push(['+25','Never played'])}const last=gameLastPlayed(g.id);if(last){const days=(Date.now()-last)/86400000;if(days<14){score-=30;reasons.push(['-30','Played recently'])}else if(days>180){score+=15;reasons.push(['+15','Not played in 6+ months'])}}else{score+=10;reasons.push(['+10','No app play logged'])}if(g.average_rating){const pts=Math.round((Number(g.average_rating)-6)*5);score+=pts;reasons.push([`${pts>=0?'+':''}${pts}`,'BGG rating'])}const ts=gameTagMap.get(g.id)||new Set();if(ts.size){score+=Math.min(20,ts.size*5);reasons.push([`+${Math.min(20,ts.size*5)}`,'Household tags'])}if(passes.some(p=>p.game_id===g.id&&Date.now()-new Date(p.created_at)<7*86400000)){score-=10;reasons.push(['-10','Passed recently'])}return{score,reasons}}
-function applyFilters(){const pc=num(el.players.value),tm=num(el.time.value);eligible=games.filter(g=>g.owned&&!String(g.item_type).includes('expansion')&&(el.scope.value==='all'||Number(g.num_plays)===0)&&(pc==null||(g.min_players<=pc&&g.max_players>=pc))&&(tm==null||(g.max_play_time&&g.max_play_time<=tm))&&([...activeFilterTags].every(t=>(gameTagMap.get(g.id)||new Set()).has(t))));el.ownedCount.textContent=games.filter(g=>g.owned).length;el.eligibleCount.textContent=eligible.length;el.unplayedCount.textContent=games.filter(g=>g.owned&&Number(g.num_plays)===0).length;el.spin.disabled=!eligible.length;drawWheel();renderHealth()}
+function applyFilters(){const pc=num(el.players.value),tm=num(el.time.value);eligible=games.filter(g=>g.owned&&!String(g.item_type).includes('expansion')&&(el.scope.value==='all'||Number(g.num_plays)===0)&&(pc==null||(g.min_players<=pc&&g.max_players>=pc))&&(tm==null||(g.max_play_time&&g.max_play_time<=tm))&&([...activeFilterTags].every(t=>(gameTagMap.get(g.id)||new Set()).has(t)))&&(!el.dizedOnly.checked||gameHasNamedTag(g.id,'Dized Tutorial')));el.ownedCount.textContent=games.filter(g=>g.owned).length;el.eligibleCount.textContent=eligible.length;el.unplayedCount.textContent=games.filter(g=>g.owned&&Number(g.num_plays)===0).length;el.spin.disabled=!eligible.length;drawWheel();renderHealth()}
 function chooseGame(){if(el.mode.value==='random')return eligible[Math.floor(Math.random()*eligible.length)];const ranked=[...eligible].map(g=>({g,...scoreGame(g)}));if(el.mode.value==='highest')ranked.sort((a,b)=>(b.g.average_rating||0)-(a.g.average_rating||0));else if(el.mode.value==='overdue')ranked.sort((a,b)=>(gameLastPlayed(a.g.id)?.getTime()||0)-(gameLastPlayed(b.g.id)?.getTime()||0));else ranked.sort((a,b)=>b.score-a.score);const pool=ranked.slice(0,Math.min(10,ranked.length));return pool[Math.floor(Math.random()*pool.length)].g}
 function drawWheel(){const w=620,c=310,r=286;ctx.clearRect(0,0,w,w);if(!eligible.length){ctx.fillStyle='#1f2937';ctx.beginPath();ctx.arc(c,c,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#cbd5e1';ctx.font='700 28px sans-serif';ctx.textAlign='center';ctx.fillText('No games match',c,c);return}const n=18,a=Math.PI*2/n;for(let i=0;i<n;i++){const s=rotation+i*a,h=(262+i*23)%360,g=ctx.createRadialGradient(c,c,20,c,c,r);g.addColorStop(0,`hsl(${h} 55% 28%)`);g.addColorStop(1,`hsl(${h} 72% 43%)`);ctx.beginPath();ctx.moveTo(c,c);ctx.arc(c,c,r,s,s+a);ctx.closePath();ctx.fillStyle=g;ctx.fill();ctx.strokeStyle='rgba(255,255,255,.18)';ctx.stroke()}ctx.beginPath();ctx.arc(c,c,65,0,Math.PI*2);ctx.fillStyle='#17102e';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='38px sans-serif';ctx.textAlign='center';ctx.fillText('🐺',c,c+13)}
 function spin(){if(spinning||!eligible.length)return;spinning=true;el.spin.disabled=true;const start=rotation,end=start+(6+Math.random()*4)*Math.PI*2,t0=performance.now();function f(now){const p=Math.min((now-t0)/3000,1),e=1-Math.pow(1-p,4);rotation=start+(end-start)*e;drawWheel();if(p<1)requestAnimationFrame(f);else{spinning=false;el.spin.disabled=false;current=chooseGame();showGame(current)}}requestAnimationFrame(f)}
-function showGame(g){el.gameName.textContent=g.name;el.gameYear.textContent=g.year_published||'';el.gamePlayers.textContent=g.min_players?`${g.min_players}–${g.max_players}`:'—';el.gameTime.textContent=g.max_play_time?`${g.max_play_time} min`:'—';el.gameWeight.textContent=g.weight?Number(g.weight).toFixed(1):'—';el.gameRating.textContent=g.average_rating?Number(g.average_rating).toFixed(1):'—';const sc=scoreGame(g);el.howlScore.textContent=sc.score;el.scoreReasons.innerHTML=sc.reasons.map(r=>`<div class="reason ${r[0].startsWith('-')?'negative':'positive'}"><strong>${r[0]}</strong> ${esc(r[1])}</div>`).join('');el.gameComments.textContent=g.comment||'No BGG comment saved.';el.bggLink.href=`https://boardgamegeek.com/boardgame/${g.bgg_id}`;el.dizedLink.href=`https://www.google.com/search?q=${encodeURIComponent('site:dized.com '+g.name+' tutorial')}`;el.youtubeLink.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(g.name+' how to play board game')}`;el.art.style.display='none';if(g.image_url){el.art.src=g.image_url;el.art.style.display='block'}else fetchMissingArt(g);
- const metadata=[...(g.mechanics||[]),...(g.categories||[])].slice(0,12);
- el.metadataTags.innerHTML=metadata.map(x=>`<span class="tag">${esc(x)}</span>`).join('');
- el.gameDescription.innerHTML=g.description?esc(g.description).replace(/&#10;|\n/g,'<br>'):'No detailed BGG description has been synchronized yet.';
- el.metadataBlock.classList.toggle('hidden',!metadata.length&&!g.description);
- renderGameTags(g);el.result.classList.remove('hidden');confetti();el.result.scrollIntoView({behavior:'smooth'})}
+function showGame(g){
+ el.gameName.textContent=g.name;const bits=[];if(g.year_published)bits.push(g.year_published);if(g.min_players)bits.push(`${g.min_players}–${g.max_players} players`);if(g.max_play_time)bits.push(`${g.min_play_time&&g.min_play_time!==g.max_play_time?g.min_play_time+'–':''}${g.max_play_time} min`);el.gameSubtitle.textContent=bits.join(' • ');
+ el.gamePlayers.textContent=g.min_players?`${g.min_players}–${g.max_players}`:'—';el.gameTime.textContent=g.max_play_time?`${g.min_play_time&&g.min_play_time!==g.max_play_time?g.min_play_time+'–':''}${g.max_play_time} min`:'—';el.gameWeight.textContent=g.weight?Number(g.weight).toFixed(1):'—';el.gameRating.textContent=g.average_rating?Number(g.average_rating).toFixed(1):'—';el.gamePlayCount.textContent=Number(g.num_plays??0);el.matchExplanation.textContent=selectionExplanation(g);
+ const sc=scoreGame(g);el.howlScore.textContent=sc.score;el.scoreReasons.innerHTML=sc.reasons.map(r=>`<div class="reason ${r[0].startsWith('-')?'negative':'positive'}"><strong>${r[0]}</strong> ${esc(r[1])}</div>`).join('');el.gameComments.textContent=g.comment||'No BGG comment saved.';
+ el.bggLink.href=`https://boardgamegeek.com/boardgame/${g.bgg_id}`;el.dizedLink.href=`https://www.google.com/search?q=${encodeURIComponent('site:dized.com/to/ '+g.name+' Dized tutorial')}`;el.youtubeLink.href=`https://www.youtube.com/results?search_query=${encodeURIComponent(g.name+' how to play board game')}`;
+ el.art.style.display='none';if(g.image_url){el.art.src=g.image_url;el.art.style.display='block'}else fetchMissingArt(g);
+ const metadata=[...(g.mechanics||[]),...(g.categories||[])].slice(0,14);el.metadataTags.innerHTML=metadata.map(x=>`<span class="tag">${esc(x)}</span>`).join('');el.gameDescription.innerHTML=g.description?esc(g.description).replace(/&#10;|\n/g,'<br>'):'No detailed BGG description has been synchronized yet.';el.metadataBlock.classList.toggle('hidden',!metadata.length&&!g.description);
+ renderGameTags(g);renderLearningState(g);el.result.classList.remove('hidden');confetti();el.result.scrollIntoView({behavior:'smooth',block:'start'})
+}
 
 async function fetchMissingArt(g){
  try{
@@ -203,7 +272,7 @@ function confetti(){el.confetti.innerHTML='';el.confetti.classList.remove('hidde
 
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tab-panel').forEach(x=>x.classList.add('hidden'));$('tab-'+b.dataset.tab).classList.remove('hidden')})
 el.signIn.onclick=async()=>{const{data,error}=await sb.auth.signInWithPassword({email:el.email.value.trim(),password:el.password.value});if(error)return status(el.authStatus,error.message,'error');enterApp(data.user)};el.signOut.onclick=async()=>{await sb.auth.signOut();location.reload()}
-;[el.mode,el.scope,el.players,el.time].forEach(x=>x.oninput=applyFilters);el.spin.onclick=spin;el.spinAgain.onclick=spin;el.play.onclick=logPlay;el.pass.onclick=passGame;el.addQueue.onclick=addQueue;el.collectionSearch.oninput=renderCollection;el.clearQueue.onclick=async()=>{await sb.from('game_night_queue').delete().eq('household_id',householdId);await loadAll()};el.addTag.onclick=async()=>{const name=el.newTagName.value.trim();if(!name)return;await sb.from('household_tags').insert({household_id:householdId,name,created_by:user.id});el.newTagName.value='';await loadAll()};
+;[el.mode,el.scope,el.players,el.time,el.dizedOnly].forEach(x=>x.oninput=applyFilters);el.markDized.onclick=()=>toggleDizedForCurrent().catch(e=>alert(e.message));el.needLearn.onclick=()=>toggleLearningForCurrent().catch(e=>alert(e.message));el.needLearnMain.onclick=()=>toggleLearningForCurrent().catch(e=>alert(e.message));el.spin.onclick=spin;el.spinAgain.onclick=spin;el.play.onclick=logPlay;el.pass.onclick=passGame;el.addQueue.onclick=addQueue;el.collectionSearch.oninput=renderCollection;el.clearQueue.onclick=async()=>{await sb.from('game_night_queue').delete().eq('household_id',householdId);await loadAll()};el.addTag.onclick=async()=>{const name=el.newTagName.value.trim();if(!name)return;await sb.from('household_tags').insert({household_id:householdId,name,created_by:user.id});el.newTagName.value='';await loadAll()};
 el.csv.onchange=async e=>{const rows=parseCSV(await e.target.files[0].text()),mapped=[...new Map(rows.map(csvGame).filter(g=>g.bgg_id&&g.name).map(g=>[g.bgg_id,g])).values()];for(let i=0;i<mapped.length;i+=100)await sb.from('games').upsert(mapped.slice(i,i+100),{onConflict:'household_id,bgg_id'});await loadAll()};
 el.reloadDb.onclick=loadAll;el.syncBgg.onclick=async()=>{
  const username=el.bggUsername.value.trim();
