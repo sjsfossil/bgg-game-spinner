@@ -6,6 +6,7 @@ A household board-game companion built around a BoardGameGeek collection. The cu
 
 - Frontend: GitHub Pages from `index.html`, `manifest.webmanifest`, and `sw.js`
 - Backend: Supabase project `yivnzvgexutjacljqijr`
+- Database: versioned SQL lives under `supabase/migrations/`
 - Edge Functions: deploy the source under `edge-functions/`
 - BGG access: configure the `BGG_API_TOKEN` Edge Function secret
 
